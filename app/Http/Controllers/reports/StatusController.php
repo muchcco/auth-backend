@@ -5,6 +5,7 @@ namespace App\Http\Controllers\reports;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 
 class StatusController extends Controller

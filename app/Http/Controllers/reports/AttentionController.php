@@ -79,7 +79,7 @@ class AttentionController extends Controller
             
             return response()->json([
                 "status" => true,
-                "message" => "Lista de usuarios",
+                "message" => "Lista de atenciones",
                 "data" => $data
             ]);
 

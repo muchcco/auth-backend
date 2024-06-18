@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Profile;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -72,6 +73,15 @@ class UserController extends Controller
     {
         $user = User::where('name', $name)->first();
 
+        $datos_com = DB::connection('mysqlintranet')
+                            ->table('M_PERSONAL AS MP')
+                            ->join('D_PERSONAL_CARGO AS DPC', 'DPC.IDCARGO_PERSONAL', '=', 'MP.IDCARGO_PERSONAL')
+                            ->join('M_CENTRO_MAC AS MCM', 'MCM.IDCENTRO_MAC', '=','MP.IDMAC')
+                            ->select(DB::raw("CONCAT(MP.APE_PAT,' ', MP.APE_MAT,', ', MP.NOMBRE) AS NOMBREU"), "DPC.NOMBRE_CARGO AS CARGO", 'MP.NUM_DOC', 'MCM.NOMBRE_MAC')
+                            ->where('MP.IDPERSONAL', $user->id_personal)
+                            ->first();
+                            // dd($datos_com);
+
         if (!$user) {
             return response()->json([
                 "status" => 0,
@@ -85,9 +95,11 @@ class UserController extends Controller
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email
+                'email' => $user->email,
+                'id_personal' => $user->id_personal,
             ],
-            'profiles' => $profiles
+            'profiles' => $profiles,
+            'datos_com' => $datos_com
         ];
 
         return response()->json([

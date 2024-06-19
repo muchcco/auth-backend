@@ -67,7 +67,7 @@ class AttentionController extends Controller
                                                 })
                                                 // ->whereIn('Nom_mac', ['MAC Callao', 'MAC Ventanilla'])
                                                 ->where(function($query) use ($request) {
-                                                    if($request->nom_mac == "0" ){
+                                                    if($request->nom_mac != "" ){
                                                         $query->whereIn('Nom_mac' , [$request->nom_mac]);
                                                     }
                                                 })

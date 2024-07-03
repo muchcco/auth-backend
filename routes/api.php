@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\reports\AttentionController;
 use App\Http\Controllers\reports\StatusController;
+use App\Http\Controllers\Administrator\UsersController;
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
@@ -19,5 +20,10 @@ Route::group(['middleware' => ['auth:api']], function() {
     // ATTENTIONS
     Route::get('table-attention', [AttentionController::class, 'tableAttention']);
     Route::get('table-status', [StatusController::class, 'tableStatus']);
+
+    // ADMINISTRATION
+    Route::get('users-list', [UsersController::class, 'usersList']);
+    Route::post('users-add', [UsersController::class, 'usersAdd']);
+    Route::get('users-details', [UsersController::class, 'usersDetails']);
     
 });

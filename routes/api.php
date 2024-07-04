@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\reports\AttentionController;
 use App\Http\Controllers\reports\StatusController;
 use App\Http\Controllers\Administrator\UsersController;
+use App\Http\Controllers\Repository\DocumentController;
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
@@ -25,5 +26,11 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::get('users-list', [UsersController::class, 'usersList']);
     Route::post('users-add', [UsersController::class, 'usersAdd']);
     Route::get('users-details', [UsersController::class, 'usersDetails']);
-    
+
+    //REPOSITORIO
+    Route::get('repository-details', [DocumentController::class, 'repositoryDetails']);
+    Route::get('repository-list', [DocumentController::class, 'repositoryList']);
+    Route::post('repository-store-doc', [DocumentController::class, 'repositoryStoreDoc']);
+    Route::post('repository-update-doc/{id}', [DocumentController::class, 'repositoryUpdate']);
+    Route::post('repository-delete-doc', [DocumentController::class, 'repositoryDelete']);
 });

@@ -34,6 +34,7 @@ class DocumentController extends Controller
                     ->join('repo_doc.categoria_doc as ctdoc', 'doc.id_cat_doc', '=', 'ctdoc.id')
                     ->join('repo_doc.documento_tags as ctdoctg', 'ctdoctg.id_documento', '=', 'doc.id')
                     ->select(
+                        DB::raw("REPLACE(REPLACE(doc.id, CHAR(13), ''), CHAR(10), '') as id"),
                         DB::raw("REPLACE(REPLACE(ctdoc.denominacion, CHAR(13), ''), CHAR(10), '') as categoria"),
                         DB::raw("REPLACE(REPLACE(doc.denominacion, CHAR(13), ''), CHAR(10), '') as documento"),
                         DB::raw("REPLACE(REPLACE(doc.descripcion, CHAR(13), ''), CHAR(10), '') as descripcion"),

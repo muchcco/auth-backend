@@ -28,7 +28,7 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::get('users-details', [UsersController::class, 'usersDetails']);
 
     //REPOSITORIO
-    Route::get('repository-details', [DocumentController::class, 'repositoryDetails']);
+    Route::get('repository-treeview', [DocumentController::class, 'repositoryTreeview']);
     Route::get('repository-list', [DocumentController::class, 'repositoryList']);
     Route::post('repository-store-doc', [DocumentController::class, 'repositoryStoreDoc']);
     Route::post('repository-update-doc/{id}', [DocumentController::class, 'repositoryUpdate']);

@@ -6,10 +6,17 @@ use App\Http\Controllers\reports\AttentionController;
 use App\Http\Controllers\reports\StatusController;
 use App\Http\Controllers\Administrator\UsersController;
 use App\Http\Controllers\Repository\DocumentController;
+use App\Http\Controllers\External\PersonalController;
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 Route::get('user-profile/{name}', [UserController::class, 'userProfile']);
+
+//PERSONAL
+Route::get('combo', [PersonalController::class, 'combo']);
+Route::get('entity/{idcentro_mac}', [PersonalController::class, 'entity']);
+Route::post('validar', [PersonalController::class, 'validar']);
+Route::get('formdata/{num_doc}', [PersonalController::class, 'formdata']);
 
 Route::group(['middleware' => ['auth:api']], function() {
     Route::post('refresh-token', [UserController::class, 'refreshToken']);

@@ -26,7 +26,7 @@ class PersonalController extends Controller
     {
         //VALIDAMOS SI EL USUARIO EXISTE
         /* ========================================================================================================= */
-
+        
         $per_mac = DB::table("db_centros_mac.M_PERSONAL")->where('NUM_DOC', $request->num_doc)->first();       
         
         /* ========================================================================================================= */
@@ -89,7 +89,7 @@ class PersonalController extends Controller
             $personal = DB::table('db_centros_mac.M_PERSONAL')->insert([                
                 'IDTIPO_DOC' => $request->input('tip_doc'),
                 'NUM_DOC' => $request->input('num_doc'),
-                'IDENTIDAD' => $request->input('options'),
+                'IDENTIDAD' => $request->input('entidad'),
                 'IDMAC' => $request->input('nom_mac'),
                 'CREATED_AT' => date('Y-m-d H:i:s')
             ]);
@@ -113,8 +113,8 @@ class PersonalController extends Controller
 
         $personal = DB::table('db_centros_mac.M_PERSONAL')->leftJoin('db_centros_mac.M_ENTIDAD', 'db_centros_mac.M_ENTIDAD.IDENTIDAD', '=', 'db_centros_mac.M_PERSONAL.IDENTIDAD')
                                 ->where('M_PERSONAL.NUM_DOC', $num_doc)
-                                ->join('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.M_PERSONAL.IDMAC')
-                                ->join('db_centros_mac.DISTRITO', 'db_centros_mac.DISTRITO.IDDISTRITO', '=','db_centros_mac.M_PERSONAL.IDDISTRITO') // DONDE VIVE
+                                ->leftJoin('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.M_PERSONAL.IDMAC')
+                                ->leftJoin('db_centros_mac.DISTRITO', 'db_centros_mac.DISTRITO.IDDISTRITO', '=','db_centros_mac.M_PERSONAL.IDDISTRITO') // DONDE VIVE
                                 ->first();
 
 

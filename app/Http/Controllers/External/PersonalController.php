@@ -72,7 +72,7 @@ class PersonalController extends Controller
                 }                
 
             }elseif($per_mac->FLAG == '3'){
-                $update_doc = DB::table('db_centros_mac.M_PERSONAL')->where('IDPERSONAL', $IDPERSONAL)->update([
+                $update_doc = DB::table('db_centros_mac.M_PERSONAL')->where('IDPERSONAL', $per_mac->IDPERSONAL)->update([
                     'IDENTIDAD' => $request->input('entidad'),
                     'FLAG' => 1,
                 ]);
@@ -167,9 +167,36 @@ class PersonalController extends Controller
                 }
             }
     
+             // Actualiza la tabla M_PERSONAL
             DB::table('db_centros_mac.M_PERSONAL')
                 ->where('IDPERSONAL', $request->idpersonal)
                 ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
+
+            // Maneja el archivo PDF
+            if ($request->hasFile('dni')) {
+                $estructura_carp = 'personal\\num_doc\\'.$request->num_doc;
+                if (!file_exists(public_path($estructura_carp))) {
+                    mkdir(public_path($estructura_carp), 0777, true);
+                }
+
+                $archivoDNI = $request->file('dni');
+                $nombreDNI = $archivoDNI->getClientOriginalName();
+                $formatoDNI = $archivoDNI->getClientOriginalExtension();
+                $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // Tamaño en kilobytes
+                $namerutaDNI = public_path($estructura_carp);
+                $archivoDNI->move($namerutaDNI, $nombreDNI);
+
+                // Inserta o actualiza en la tabla a_personal
+                DB::table('db_centros_mac.A_PERSONAL')->updateOrInsert(
+                    ['IDPERSONAL' => $request->idpersonal, 'NOMBRE_ARCHIVO' => $nombreDNI],
+                    [
+                        'NOMBRE_RUTA' => $estructura_carp.'\\'.$nombreDNI,
+                        'FORMATO_DOC' => $formatoDNI,
+                        'PESO_DOC' => $tamañoEnKBDNI,
+                        'FECHA_CREACION' => date('Y-m-d H:i:s')
+                    ]
+                );
+            }
     
             return response()->json([
                 "status" => true,

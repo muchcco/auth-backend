@@ -109,9 +109,12 @@ class PersonalController extends Controller
     {
         $departamentos = DB::select("SELECT * FROM db_centros_mac.DEPARTAMENTO ");
 
+        $cargos = DB::select("SELECT * FROM db_centros_mac.D_PERSONAL_CARGO ");
+
         $personal = DB::table('db_centros_mac.M_PERSONAL')->leftJoin('db_centros_mac.M_ENTIDAD', 'db_centros_mac.M_ENTIDAD.IDENTIDAD', '=', 'db_centros_mac.M_PERSONAL.IDENTIDAD')
                                 ->where('M_PERSONAL.NUM_DOC', $num_doc)
                                 ->join('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.M_PERSONAL.IDMAC')
+                                ->join('db_centros_mac.DISTRITO', 'db_centros_mac.DISTRITO.IDDISTRITO', '=','db_centros_mac.M_PERSONAL.IDDISTRITO') // DONDE VIVE
                                 ->first();
 
 
@@ -120,7 +123,69 @@ class PersonalController extends Controller
             "message" => "Detalles obtenidos con éxito",
             "departamentos" => $departamentos,
             "personal" => $personal,
+            "cargos" => $cargos,
         ]);
+    }
+
+    public function storeform(Request $request)
+    {
+        try {
+
+            $inputs = [
+                'NUM_DOC' => $request->num_doc,
+                'IDTIPO_DOC' => $request->id_tipo_doc,
+                'SEXO' => $request->sexo,
+                'APE_PAT' => $request->ape_pat,
+                'APE_MAT' => $request->ape_mat,
+                'NOMBRE' => $request->nombre,
+                'TELEFONO' => $request->telefono,
+                'CELULAR' => $request->celular,
+                'CORREO' => $request->correo,
+                'DIRECCION' => $request->direccion,
+                'IDDISTRITO' => $request->distritoSeleccionado,
+                'FECH_NACIMIENTO' => $request->fech_nacimiento,
+                'ESTADO_CIVIL' => $request->ecivil,
+                'DF_N_HIJOS' => $request->df_n_hijos,
+                'PCM_TALLA' => $request->pcm_talla,
+                'IDCARGO_PERSONAL' => $request->cargoSeleccionado,
+                'PD_FECHA_INGRESO' => $request->dp_fecha_ingreso,
+                'NUMERO_MODULO' => $request->n_modulo,
+                'TVL_ID' => $request->tlv_id,
+                'N_CONTRATO' => $request->n_contrato,
+                'GI_ID' => $request->gi_id,
+                'GI_CARRERA' => $request->gi_carrera,
+                'GI_CURSO_ESP' => $request->gi_curso_esp,
+                'DLP_JEFE_INMEDIATO' => $request->dlp_jefe_inmediato,
+                'DLP_CARGO' => $request->dlp_cargo,
+                'DLP_TELEFONO' => $request->dlp_telefono,
+            ];
+    
+            $pending = [];
+            foreach ($inputs as $key => $value) {
+                if (empty($value)) {
+                    $pending[] = $key;
+                }
+            }
+    
+            DB::table('db_centros_mac.M_PERSONAL')
+                ->where('IDPERSONAL', $request->idpersonal)
+                ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
+    
+            return response()->json([
+                "status" => true,
+                "message" => "Detalles obtenidos con éxito",
+                "data" => $inputs,
+                "pending" => $pending
+            ]);
+
+
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Se excedió el tiempo de carga. Inténtelo de nuevo más tarde.",
+                "error" => $e->getMessage()
+            ], 500);
+        }
     }
 
     /******************************************************* RECURSOS ***************************************************************************************/
@@ -140,6 +205,29 @@ class PersonalController extends Controller
             "status" => true,
             "message" => "Detalles obtenidos con éxito",
             "options" => $idcentro_mac,
+        ]);
+    }
+
+    public function provincias($departamento_id)
+    {
+        $provincias = DB::table('db_centros_mac.PROVINCIA')->where('DEPARTAMENTO_ID', $departamento_id)->get();
+
+
+        return response()->json([
+            "status" => true,
+            "message" => "Detalles obtenidos con éxito",
+            "provincias" => $provincias,
+        ]);
+    }
+
+    public function distritos($provincia_id)
+    {
+        $distritos = DB::table('db_centros_mac.DISTRITO')->where('PROVINCIA_ID', $provincia_id)->get();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Detalles obtenidos con éxito",
+            "distritos" => $distritos,
         ]);
     }
 }

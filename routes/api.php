@@ -14,9 +14,15 @@ Route::get('user-profile/{name}', [UserController::class, 'userProfile']);
 
 //PERSONAL
 Route::get('combo', [PersonalController::class, 'combo']);
-Route::get('entity/{idcentro_mac}', [PersonalController::class, 'entity']);
 Route::post('validar', [PersonalController::class, 'validar']);
 Route::get('formdata/{num_doc}', [PersonalController::class, 'formdata']);
+Route::post('storeform', [PersonalController::class, 'storeform']);
+
+
+//RECURSOS
+Route::get('entity/{idcentro_mac}', [PersonalController::class, 'entity']);
+Route::get('provincias/{departamento_id}', [PersonalController::class, 'provincias']);
+Route::get('distritos/{provincia_id}', [PersonalController::class, 'distritos']);
 
 Route::group(['middleware' => ['auth:api']], function() {
     Route::post('refresh-token', [UserController::class, 'refreshToken']);

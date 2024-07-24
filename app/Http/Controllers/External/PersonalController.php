@@ -250,7 +250,7 @@ class PersonalController extends Controller
             }
 
             if($request->correo){
-                Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat, $pending2));
+                Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat, $pending));
             }           
     
             return response()->json([

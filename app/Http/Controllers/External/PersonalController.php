@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+use App\Mail\ConfirmacionRegistro;
+use Illuminate\Support\Facades\Mail;
+
+
 class PersonalController extends Controller
 {
     public function combo()
@@ -129,48 +133,86 @@ class PersonalController extends Controller
 
     public function storeform(Request $request)
     {
+        // dd($request->id_tipo_doc);
         try {
-
+            
             $inputs = [
-                'NUM_DOC' => $request->num_doc,
-                'IDTIPO_DOC' => $request->id_tipo_doc,
-                'SEXO' => $request->sexo,
-                'APE_PAT' => $request->ape_pat,
-                'APE_MAT' => $request->ape_mat,
-                'NOMBRE' => $request->nombre,
-                'TELEFONO' => $request->telefono,
-                'CELULAR' => $request->celular,
-                'CORREO' => $request->correo,
-                'DIRECCION' => $request->direccion,
-                'IDDISTRITO' => $request->distritoSeleccionado,
-                'FECH_NACIMIENTO' => $request->fech_nacimiento,
-                'ESTADO_CIVIL' => $request->ecivil,
-                'DF_N_HIJOS' => $request->df_n_hijos,
-                'PCM_TALLA' => $request->pcm_talla,
-                'IDCARGO_PERSONAL' => $request->cargoSeleccionado,
-                'PD_FECHA_INGRESO' => $request->dp_fecha_ingreso,
-                'NUMERO_MODULO' => $request->n_modulo,
-                'TVL_ID' => $request->tlv_id,
-                'N_CONTRATO' => $request->n_contrato,
-                'GI_ID' => $request->gi_id,
-                'GI_CARRERA' => $request->gi_carrera,
-                'GI_CURSO_ESP' => $request->gi_curso_esp,
-                'DLP_JEFE_INMEDIATO' => $request->dlp_jefe_inmediato,
-                'DLP_CARGO' => $request->dlp_cargo,
-                'DLP_TELEFONO' => $request->dlp_telefono,
+                'NUM_DOC' => strtoupper($request->num_doc) ?: null,
+                'IDTIPO_DOC' => strtoupper($request->id_tipo_doc) ?: null,
+                'SEXO' => strtoupper($request->sexo) ?: null,
+                'APE_PAT' => strtoupper($request->ape_pat) ?: null,
+                'APE_MAT' => strtoupper($request->ape_mat) ?: null,
+                'NOMBRE' => strtoupper($request->nombre) ?: null,
+                'TELEFONO' => $request->telefono ?: null,
+                'CELULAR' => $request->celular ?: null,
+                'CORREO' => $request->correo ?: null,
+                'DIRECCION' => strtoupper($request->direccion) ?: null,
+                'IDDISTRITO' => $request->distritoSeleccionado ?: null,
+                'FECH_NACIMIENTO' => $request->fech_nacimiento ?: null,
+                'ESTADO_CIVIL' => strtoupper($request->ecivil) ?: null,
+                'DF_N_HIJOS' => $request->df_n_hijos ?: null,
+                'PCM_TALLA' => strtoupper($request->pcm_talla) ?: null,
+                'IDCARGO_PERSONAL' => $request->cargoSeleccionado ?: null,
+                'PD_FECHA_INGRESO' => $request->dp_fecha_ingreso ?: null,
+                'NUMERO_MODULO' => strtoupper($request->n_modulo) ?: null,
+                'TVL_ID' => $request->tlv_id ?: null,
+                'N_CONTRATO' => strtoupper($request->n_contrato) ?: null,
+                'GI_ID' => $request->gi_id ?: null,
+                'GI_CARRERA' => strtoupper($request->gi_carrera) ?: null,
+                'GI_CURSO_ESP' => strtoupper($request->gi_curso_esp) ?: null,
+                'DLP_JEFE_INMEDIATO' => strtoupper($request->dlp_jefe_inmediato) ?: null,
+                'DLP_CARGO' => strtoupper($request->dlp_cargo) ?: null,
+                'DLP_TELEFONO' => $request->dlp_telefono ?: null,
             ];
-    
+
+            $friendlyFieldNames = [
+                'NUM_DOC' => 'Número de Documento',
+                'ID_TIPO_DOC' => 'Tipo de Documento',
+                'SEXO' => 'Sexo',
+                'APE_PAT' => 'Apellido Paterno',
+                'APE_MAT' => 'Apellido Materno',
+                'NOMBRE' => 'Nombres',
+                'TELEFONO' => 'Teléfono',
+                'CELULAR' => 'Celular',
+                'CORREO' => 'Correo Electrónico',
+                'DIRECCION' => 'Dirección',
+                'DISTRITO_SELECCIONADO' => 'Distrito',
+                'FECH_NACIMIENTO' => 'Fecha de Nacimiento',
+                'ECIVIL' => 'Estado Civil',
+                'DF_N_HIJOS' => 'Número de Hijos',
+                'PCM_TALLA' => 'Talla de Polo',
+                'CARGO_SELECCIONADO' => 'Cargo',
+                'DP_FECHA_INGRESO' => 'Fecha de Ingreso al Centro MAC',
+                'NUMERO_MODULO' => 'Número de Módulo de Atención',
+                'TLV_ID' => 'Modalidad de Contrato',
+                'N_CONTRATO' => 'Número de Contrato',
+                'GI_ID' => 'Grado',
+                'GI_CARRERA' => 'Carrera/Profesión',
+                'GI_CURSO_ESP' => 'Cursos de Especialización',
+                'DLP_JEFE_INMEDIATO' => 'Jefe Inmediato Superior',
+                'DLP_CARGO' => 'Cargo',
+                'DLP_TELEFONO' => 'Teléfono del Jefe Inmediato',
+            ];
+            
+            // front
             $pending = [];
             foreach ($inputs as $key => $value) {
-                if (empty($value)) {
-                    $pending[] = $key;
+                if ($value === NULL || $value === '') {
+                    $pending[] = $friendlyFieldNames[$key];
+                    unset($inputs[$key]);
                 }
             }
-    
+            
              // Actualiza la tabla M_PERSONAL
-            DB::table('db_centros_mac.M_PERSONAL')
-                ->where('IDPERSONAL', $request->idpersonal)
-                ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
+            //  DB::table('db_centros_mac.M_PERSONAL')
+            //         ->where('IDPERSONAL', $request->idpersonal)
+            //         ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
+
+            DB::select("UPDATE `db_centros_mac`.`M_PERSONAL` 
+                        SET `NUM_DOC` = $request->num_doc, `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = $request->sexo, `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = $request->telefono, `CELULAR` = $request->celular, `CORREO` = '$request->correo', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = $request->df_n_hijos, `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `NUMERO_MODULO` = '$request->n_modulo', `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = $request->dlp_telefono, `UPDATED_AT` = '2024-07-24 09:32:30' 
+                        WHERE `IDPERSONAL` = $request->idpersonal");
+ 
+            // dd($save);
 
             // Maneja el archivo PDF
             if ($request->hasFile('dni')) {
@@ -184,7 +226,7 @@ class PersonalController extends Controller
                 $formatoDNI = $archivoDNI->getClientOriginalExtension();
                 $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // Tamaño en kilobytes
                 $namerutaDNI = public_path($estructura_carp);
-                $archivoDNI->move($namerutaDNI, $nombreDNI);
+                $archivoDNI->move($namerutaDNI, $request->num_doc);
 
                 // Inserta o actualiza en la tabla a_personal
                 DB::table('db_centros_mac.A_PERSONAL')->updateOrInsert(
@@ -197,6 +239,19 @@ class PersonalController extends Controller
                     ]
                 );
             }
+
+            $nombres_dat = $request->nombre.' '.$request->ape_pat.' '.$request->ape_mat;
+
+            $pending2 = [];
+            foreach ($inputs as $key => $value) {
+                if ($value === NULL || $value === '') {
+                    $pending2[] = $friendlyFieldNames[$key];
+                }
+            }
+
+            if($request->correo){
+                Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat, $pending2));
+            }           
     
             return response()->json([
                 "status" => true,

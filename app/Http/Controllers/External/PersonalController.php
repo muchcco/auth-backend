@@ -78,6 +78,7 @@ class PersonalController extends Controller
             }elseif($per_mac->FLAG == '3'){
                 $update_doc = DB::table('db_centros_mac.M_PERSONAL')->where('IDPERSONAL', $per_mac->IDPERSONAL)->update([
                     'IDENTIDAD' => $request->input('entidad'),
+                    'IDMAC' => $request->input('nom_mac'),
                     'FLAG' => 1,
                 ]);
 

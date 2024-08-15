@@ -9,6 +9,10 @@ use App\Models\User;
 use App\Models\Profile;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use App\Mail\ConfirmacionUsuario;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -72,6 +76,14 @@ class UserController extends Controller
     public function userProfile(Request $request, $name)
     {
         $user = User::where('name', $name)->first();
+
+        if(!$user){
+            return response()->json([
+                "status" => '201',
+                "message" => "Usuario no encontrado!"
+                ], 200);
+            
+        }       
 
         $datos_com = DB::connection('mysqlintranet')
                             ->table('M_PERSONAL AS MP')
@@ -139,6 +151,124 @@ class UserController extends Controller
             "status" => 1,
             "message" => "Sesión cerrada correctamente"
         ]);
+    }
+
+    /***************************** MODULO ADMINISTRACION ****************************************************/
+
+    public function userPersonal(Request $request)
+    {
+        $us_exist = DB::select("SELECT GROUP_CONCAT(id_personal) AS list_us FROM users ;");
+
+        $us_exist_array = array_map('intval', explode(',', $us_exist[0]->list_us));
+
+        $query = DB::table('db_centros_mac.m_personal')
+            ->join('db_centros_mac.m_centro_mac', 'db_centros_mac.m_centro_mac.IDCENTRO_MAC', '=', 'db_centros_mac.m_personal.IDMAC')
+            ->where('db_centros_mac.m_personal.flag', 1)
+            ->whereNotIn('db_centros_mac.m_personal.IDPERSONAL', $us_exist_array)
+            ->get();
+
+        $perfil = DB::table('profiles')->get();
+
+        $roles = Role::pluck('name', 'id');
+
+        return response()->json([
+            "status" => 1,
+            "message" => "datos varios",
+            "personal" => $query,
+            "profile" => $perfil,
+            "roles" => $roles
+        ]);
+    }
+
+
+
+    public function usersStore(Request $request)
+    {
+        try {
+
+            // Capturamos los datos del request
+            $IDPERSONAL = $request->input('IDPERSONAL');
+            $nombre = $request->input('nombre');
+            $perfil_ = $request->input('perfil_'); // Aquí obtenemos el array de perfiles
+            $rol_ = $request->input('rol_');
+
+            // Verificamos si los datos están llegando correctamente
+            if (is_null($IDPERSONAL) || is_null($nombre) || is_null($perfil_) || is_null($rol_)) {
+                return response()->json([
+                    "status" => false,
+                    "message" => "Faltan datos en la solicitud."
+                ], 400);
+            }
+
+            $personal = DB::table('db_centros_mac.m_personal')->where('IDPERSONAL', $request->IDPERSONAL)->first();
+
+            $save = new User;
+            $save->name = $personal->NUM_DOC;
+            $save->email = $personal->CORREO; 
+            $save->id_personal = $request->IDPERSONAL;
+            $save->password = bcrypt($personal->NUM_DOC);
+            $save->save();
+
+            foreach ($request->perfil_ as $perfilId) {
+                DB::table('user_profile')->insert([
+                    'user_id' => $save->id,  
+                    'profile_id' => $perfilId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            DB::table('model_has_roles')->insert([
+                'role_id' => $request->rol_,  
+                'model_type' => 'App\\Models\\User',  
+                'model_id' => $save->id,
+            ]);
+
+            /*** HORA GUARDAMOS LOS DATOS EN LA USERS DE LA TABLA CENTROS_MAC  PARA PODER TENER UNIFORMIDAD */
+
+            $save_2 = DB::table('db_centros_mac.users')->insert([
+                'name'      =>  $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT,
+                'email'     =>  $personal->CORREO,
+                'idpersonal'=>  $request->IDPERSONAL,
+                'password'  =>  bcrypt($personal->NUM_DOC),
+                'flag'      =>  1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            DB::table('db_centros_mac.model_has_roles')->insert([
+                'role_id' => $request->rol_,  
+                'model_type' => 'App\\Models\\User',  
+                'model_id' => $save->id,
+            ]);
+
+            /*** FIN  ******/
+
+            $nombres_dat = $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT;
+            $usuario = $personal->NUM_DOC;
+            $password = $personal->NUM_DOC;
+
+            $configuracion = DB::table('configuration_sist')->where('PARAMETRO', 'CORREO')->first();
+
+            if($configuracion->FLAG == '1'){
+                if($personal->CORREO){
+                    Mail::to($personal->CORREO)->send(new ConfirmacionUsuario($nombres_dat, $usuario , $password));
+                } 
+            }
+
+            return response()->json([
+                "status" => true,
+                "message" => "Usuario creado exitosamente.",
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Se excedió el tiempo de carga. Inténtelo de nuevo más tarde.",
+                "error" => $e->getMessage()
+            ], 500);
+        }
+        
     }
 }
 

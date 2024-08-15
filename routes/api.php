@@ -39,6 +39,8 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::get('users-list', [UsersController::class, 'usersList']);
     Route::post('users-add', [UsersController::class, 'usersAdd']);
     Route::get('users-details', [UsersController::class, 'usersDetails']);
+    Route::get('user-personal', [UserController::class, 'userPersonal']);
+    Route::post('user-store', [UserController::class, 'usersStore']);
 
     //REPOSITORIO
     Route::get('repository-treeview', [DocumentController::class, 'repositoryTreeview']);

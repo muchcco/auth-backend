@@ -7,6 +7,7 @@ use App\Http\Controllers\reports\StatusController;
 use App\Http\Controllers\Administrator\UsersController;
 use App\Http\Controllers\Repository\DocumentController;
 use App\Http\Controllers\External\PersonalController;
+use App\Http\Controllers\Administrator\EntityController;
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
@@ -41,6 +42,12 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::get('users-details', [UsersController::class, 'usersDetails']);
     Route::get('user-personal', [UserController::class, 'userPersonal']);
     Route::post('user-store', [UserController::class, 'usersStore']);
+
+    Route::get('entity-list', [EntityController::class, 'EntityList']);
+    Route::get('entity-details', [EntityController::class, 'entityDetails']);
+
+    Route::post('entity-store', [EntityController::class, 'entityStore']);
+    Route::post('entity-modal-store', [EntityController::class, 'entityModalStore']);
 
     //REPOSITORIO
     Route::get('repository-treeview', [DocumentController::class, 'repositoryTreeview']);

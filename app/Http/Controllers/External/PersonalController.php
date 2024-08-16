@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Mail\ConfirmacionRegistro;
 use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
 
 class PersonalController extends Controller
@@ -81,6 +82,18 @@ class PersonalController extends Controller
                     'IDMAC' => $request->input('nom_mac'),
                     'FLAG' => 1,
                 ]);
+
+                $usuarios = User::where('name', $request->num_doc)->first();
+
+                if(isset($usuarios)){
+                    $update_users = DB::table('users')->where('id_personal', $per_mac->IDPERSONAL)->update([
+                        'idcentro_mac' => $request->input('nom_mac'),
+                    ]);
+    
+                    $update_users_de = DB::table('db_centros_mac.users')->where('idpersonal', $per_mac->IDPERSONAL)->update([
+                        'idcentro_mac' => $request->input('nom_mac'),
+                    ]);
+                }               
 
                 return response()->json([
                     "status" => true,

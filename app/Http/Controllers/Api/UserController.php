@@ -206,6 +206,7 @@ class UserController extends Controller
             $save->name = $personal->NUM_DOC;
             $save->email = $personal->CORREO; 
             $save->id_personal = $request->IDPERSONAL;
+            $save->idcentro_mac = $personal->IDMAC;
             $save->password = bcrypt($personal->NUM_DOC);
             $save->save();
 
@@ -231,6 +232,7 @@ class UserController extends Controller
                 'email'     =>  $personal->CORREO,
                 'idpersonal'=>  $request->IDPERSONAL,
                 'password'  =>  bcrypt($personal->NUM_DOC),
+                'idcentro_mac'  =>  $personal->IDMAC,
                 'flag'      =>  1,
                 'created_at' => now(),
                 'updated_at' => now(),

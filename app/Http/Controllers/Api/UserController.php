@@ -13,6 +13,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use App\Mail\ConfirmacionUsuario;
 use Illuminate\Support\Facades\Mail;
+use App\Models\Userint;
 
 class UserController extends Controller
 {
@@ -227,16 +228,27 @@ class UserController extends Controller
 
             /*** HORA GUARDAMOS LOS DATOS EN LA USERS DE LA TABLA CENTROS_MAC  PARA PODER TENER UNIFORMIDAD */
 
-            $save_2 = DB::table('db_centros_mac.users')->insert([
-                'name'      =>  $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT,
-                'email'     =>  $personal->CORREO,
-                'idpersonal'=>  $request->IDPERSONAL,
-                'password'  =>  bcrypt($personal->NUM_DOC),
-                'idcentro_mac'  =>  $personal->IDMAC,
-                'flag'      =>  1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $save2 = new Userint;
+            $save2->name = $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT;
+            $save2->email = $personal->CORREO; 
+            $save2->idpersonal = $request->IDPERSONAL;
+            $save2->idcentro_mac = $personal->IDMAC;
+            $save2->password = $save->password;
+            $save2->flag = 1;
+            $save2->save();
+
+            // $save_2 = DB::table('db_centros_mac.users')->insert([
+            //     'name'      =>  $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT,
+            //     'email'     =>  $personal->CORREO,
+            //     'idpersonal'=>  $request->IDPERSONAL,
+            //     'password'  =>  bcrypt($personal->NUM_DOC),
+            //     'idcentro_mac'  =>  $personal->IDMAC,
+            //     'flag'      =>  1,
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ]);
+
+
 
             DB::table('db_centros_mac.model_has_roles')->insert([
                 'role_id' => $request->rol_,  

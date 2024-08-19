@@ -8,6 +8,7 @@ use App\Http\Controllers\Administrator\UsersController;
 use App\Http\Controllers\Repository\DocumentController;
 use App\Http\Controllers\External\PersonalController;
 use App\Http\Controllers\Administrator\EntityController;
+use App\Http\Controllers\External\AssistsController;
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
@@ -18,6 +19,10 @@ Route::get('combo', [PersonalController::class, 'combo']);
 Route::post('validar', [PersonalController::class, 'validar']);
 Route::get('formdata/{num_doc}', [PersonalController::class, 'formdata']);
 Route::post('storeform', [PersonalController::class, 'storeform']);
+
+//ASISTENCIA
+Route::get('users-assists-list', [AssistsController::class, 'usersAssistsList']);
+Route::post('store-assists', [AssistsController::class, 'storeAssists']);
 
 
 //RECURSOS

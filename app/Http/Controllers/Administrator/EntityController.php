@@ -36,6 +36,7 @@ class EntityController extends Controller
                         // Si no es Administrador, aplica una condición adicional
                         return $query->where('db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', $this->centro_mac()->idmac);
                     })
+                    ->orderBy('NOMBRE_ENTIDAD', 'ASC')
                     ->get();
 
         return response()->json([
@@ -51,7 +52,7 @@ class EntityController extends Controller
 
         $roles = $user->getRoleNames();
 
-        $entity = DB::table('db_centros_mac.M_ENTIDAD')->get();
+        $entity = DB::table('db_centros_mac.M_ENTIDAD')->orderBy('ABREV_ENTIDAD', 'ASC')->get();
 
         $mac = DB::table('db_centros_mac.M_CENTRO_MAC')
                         ->when(!$roles->contains('Administrador'), function ($query) use ($user) {
@@ -73,6 +74,15 @@ class EntityController extends Controller
     public function entityStore(Request $request)
     {
         try {
+            $ent_mac = DB::table('db_centros_mac.M_MAC_ENTIDAD')->where('IDCENTRO_MAC', $request->mac)->where('IDENTIDAD', $request->entity)->first();
+
+            if(isset($ent_mac)){
+                return response()->json([
+                    "status" => false,
+                    "message" => "La entidad ya fue registrada para el centro mac.",                    
+                ], 400);
+            }
+            
 
             $save = DB::table('db_centros_mac.M_MAC_ENTIDAD')->insert([
                 'IDCENTRO_MAC'      =>      $request->mac,
@@ -109,6 +119,27 @@ class EntityController extends Controller
                 "status" => 1,
                 "message" => "datos varios",
                 "save" => $save
+            ]);
+
+
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Se excedió el tiempo de carga. Inténtelo de nuevo más tarde.",
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function entityDelete(Request $request)
+    {
+        try {
+
+            DB::table('db_centros_mac.M_MAC_ENTIDAD')->where('IDMAC_ENTIDAD', $request->idmacent)->delete();
+
+            return response()->json([
+                "status" => 1,
+                "message" => "El registro feu eliminado con exito..."
             ]);
 
 

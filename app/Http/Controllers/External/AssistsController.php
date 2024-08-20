@@ -74,5 +74,5 @@ class AssistsController extends Controller
                 "error" => $e->getMessage()
             ], 500);
         }
-    }
+    }       
 }

@@ -53,6 +53,7 @@ Route::group(['middleware' => ['auth:api']], function() {
 
     Route::post('entity-store', [EntityController::class, 'entityStore']);
     Route::post('entity-modal-store', [EntityController::class, 'entityModalStore']);
+    Route::post('entity-delete', [EntityController::class, 'entityDelete']);
 
     //REPOSITORIO
     Route::get('repository-treeview', [DocumentController::class, 'repositoryTreeview']);

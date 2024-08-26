@@ -230,7 +230,7 @@ class UserController extends Controller
 
             $save2 = new Userint;
             $save2->name = $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT;
-            $save2->email = $personal->CORREO; 
+            $save2->email = $personal->NUM_DOC; 
             $save2->idpersonal = $request->IDPERSONAL;
             $save2->idcentro_mac = $personal->IDMAC;
             $save2->password = $save->password;
@@ -253,7 +253,7 @@ class UserController extends Controller
             DB::table('db_centros_mac.model_has_roles')->insert([
                 'role_id' => $request->rol_,  
                 'model_type' => 'App\\Models\\User',  
-                'model_id' => $save->id,
+                'model_id' => $save2->id,
             ]);
 
             /*** FIN  ******/

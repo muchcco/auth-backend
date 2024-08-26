@@ -212,7 +212,7 @@ class PersonalController extends Controller
             // front
             $pending = [];
             foreach ($inputs as $key => $value) {
-                if ($value === NULL || $value === '') {
+                if (!isset($value) && $value !== '0') {
                     $pending[] = $friendlyFieldNames[$key];
                     unset($inputs[$key]);
                 }

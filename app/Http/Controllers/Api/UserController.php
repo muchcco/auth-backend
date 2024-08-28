@@ -354,11 +354,11 @@ class UserController extends Controller
     public function usersUpdate(Request $request)
     {
         try {
-            // Actualizar en la primera base de datos
-            $user = User::findOrFail($id);
-            $user->name = $request->input('name');
-            $user->email = $request->input('email');
-            $user->save();
+            // Actualizar en la primera base de datos            
+
+            $user = User::where('id', $request->id)->first();
+
+            // dd($user);
     
             // Actualizar roles en la primera base de datos
             $user->roles()->sync([$request->rol_]);
@@ -375,16 +375,13 @@ class UserController extends Controller
             }
     
             // Actualizar en la segunda base de datos
-            DB::table('db_centros_mac.users')
-                ->where('idpersonal', $user->id_personal)
-                ->update([
-                    'name' => $request->input('name'),
-                    'email' => $request->input('email'),
-                ]);
+
+            $user2 = Userint::where('email', $user->name)->first();
+            
     
             // Actualizar roles en la segunda base de datos
             DB::table('db_centros_mac.model_has_roles')
-                ->where('model_id', $user->id)
+                ->where('model_id', $user2->id)
                 ->update([
                     'role_id' => $request->rol_,
                 ]);

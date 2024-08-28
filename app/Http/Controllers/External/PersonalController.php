@@ -135,6 +135,12 @@ class PersonalController extends Controller
                                 ->leftJoin('db_centros_mac.DISTRITO', 'db_centros_mac.DISTRITO.IDDISTRITO', '=','db_centros_mac.M_PERSONAL.IDDISTRITO') // DONDE VIVE
                                 ->first();
 
+        $modulos = DB::table('db_centros_mac.M_MODULO')
+                                ->join('db_centros_mac.M_ENTIDAD', 'db_centros_mac.M_ENTIDAD.IDENTIDAD', '=', 'db_centros_mac.M_MODULO.IDENTIDAD')
+                                ->join('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.M_MODULO.IDCENTRO_MAC')
+                                ->where('db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', $personal->IDMAC)
+                                ->orderBy('db_centros_mac.M_MODULO.N_MODULO','ASC')
+                                ->get();                                
 
         return response()->json([
             "status" => true,
@@ -142,6 +148,7 @@ class PersonalController extends Controller
             "departamentos" => $departamentos,
             "personal" => $personal,
             "cargos" => $cargos,
+            "modulos" => $modulos
         ]);
     }
 
@@ -168,7 +175,7 @@ class PersonalController extends Controller
                 'PCM_TALLA' => strtoupper($request->pcm_talla) ?: null,
                 'IDCARGO_PERSONAL' => $request->cargoSeleccionado ?: null,
                 'PD_FECHA_INGRESO' => $request->dp_fecha_ingreso ?: null,
-                'NUMERO_MODULO' => strtoupper($request->n_modulo) ?: null,
+                'IDMODULO' => strtoupper($request->moduloSeleccionado) ?: null,
                 'TVL_ID' => $request->tlv_id ?: null,
                 'N_CONTRATO' => strtoupper($request->n_contrato) ?: null,
                 'GI_ID' => $request->gi_id ?: null,
@@ -198,7 +205,7 @@ class PersonalController extends Controller
                 'PCM_TALLA' => 'Talla de Polo',
                 'CARGO_SELECCIONADO' => 'Cargo',
                 'DP_FECHA_INGRESO' => 'Fecha de Ingreso al Centro MAC',
-                'NUMERO_MODULO' => 'Número de Módulo de Atención',
+                'IDMODULO' => 'Número de Módulo de Atención',
                 'TLV_ID' => 'Modalidad de Contrato',
                 'N_CONTRATO' => 'Número de Contrato',
                 'GI_ID' => 'Grado',
@@ -224,7 +231,7 @@ class PersonalController extends Controller
             //         ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
 
             DB::select("UPDATE `db_centros_mac`.`M_PERSONAL` 
-                        SET `NUM_DOC` = $request->num_doc, `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `NUMERO_MODULO` = '$request->n_modulo', `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `UPDATED_AT` = '2024-07-24 09:32:30' 
+                        SET `NUM_DOC` = $request->num_doc, `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `IDMODULO` = $request->moduloSeleccionado, `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `UPDATED_AT` = '2024-07-24 09:32:30' 
                         WHERE `IDPERSONAL` = $request->idpersonal");
  
             // dd($save);

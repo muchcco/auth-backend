@@ -12,6 +12,20 @@ use App\Models\Profile;
 
 class UsersController extends Controller
 {
+    private function centro_mac(){
+        // VERIFICAMOS EL USUARIO A QUE CENTRO MAC PERTENECE
+        /*================================================================================================================*/
+        $us_id = auth()->user()->idcentro_mac;
+        $user = DB::table('db_centros_mac.users')->join('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.users.idcentro_mac')->where('M_CENTRO_MAC.IDCENTRO_MAC', $us_id)->first();
+
+        $idmac = $user->IDCENTRO_MAC;
+        $name_mac = $user->NOMBRE_MAC;
+        /*================================================================================================================*/
+
+        $resp = ['idmac'=>$idmac, 'name_mac'=>$name_mac ];
+
+        return (object) $resp;
+    }
 
     public function usersDetails()
     {
@@ -48,17 +62,23 @@ class UsersController extends Controller
                 ->where('mhr.model_type', '=', User::class);
         })
         ->leftJoin('roles as r', 'mhr.role_id', '=', 'r.id')
-        ->groupBy('users.id', 'users.name', 'personal.NOMBRE', 'personal.APE_PAT', 'personal.APE_MAT', 'centroMac.NOMBRE_MAC', 'entidad.ABREV_ENTIDAD', 'personal.CORREO')
-        ->with([
-            'profiles:description',
-            'roles:name'
-        ])
-        ->get()
-        ->map(function ($user) {
-            $user->perfiles = $user->profiles->pluck('description')->implode(', ');
-            $user->roles = $user->roles->pluck('name')->implode(', ');
-            return $user;
-        });
+        ->groupBy('users.id', 'users.name', 'personal.NOMBRE', 'personal.APE_PAT', 'personal.APE_MAT', 'centroMac.NOMBRE_MAC', 'entidad.ABREV_ENTIDAD', 'personal.CORREO');
+
+        if (auth()->user()->hasRole('Especialista TIC|Orientador|Asesor|Supervisor|Coordinador')) {
+            $users->where('personal.IDMAC', $this->centro_mac()->idmac);
+        }
+
+        $users = $users->with([
+                    'profiles:description',
+                    'roles:name'
+                ])
+                ->get()
+                ->map(function ($user) {
+                    $user->perfiles = $user->profiles->pluck('description')->implode(', ');
+                    $user->roles = $user->roles->pluck('name')->implode(', ');
+                    return $user;
+                });
+
 
         // dd($users);
     

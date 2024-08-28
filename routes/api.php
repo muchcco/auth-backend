@@ -47,6 +47,10 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::get('users-details', [UsersController::class, 'usersDetails']);
     Route::get('user-personal', [UserController::class, 'userPersonal']);
     Route::post('user-store', [UserController::class, 'usersStore']);
+    Route::get('user-edit', [UserController::class, 'usersEdit']);
+    Route::post('user-update', [UserController::class, 'usersUpdate']);
+    Route::post('user-password', [UserController::class, 'usersPassword']);
+    Route::post('user-delete', [UserController::class, 'usersDelete']);
 
     Route::get('entity-list', [EntityController::class, 'EntityList']);
     Route::get('entity-details', [EntityController::class, 'entityDetails']);

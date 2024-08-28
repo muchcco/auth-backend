@@ -17,6 +17,22 @@ use App\Models\Userint;
 
 class UserController extends Controller
 {
+
+    private function centro_mac(){
+        // VERIFICAMOS EL USUARIO A QUE CENTRO MAC PERTENECE
+        /*================================================================================================================*/
+        $us_id = auth()->user()->idcentro_mac;
+        $user = DB::table('db_centros_mac.users')->join('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.users.idcentro_mac')->where('M_CENTRO_MAC.IDCENTRO_MAC', $us_id)->first();
+
+        $idmac = $user->IDCENTRO_MAC;
+        $name_mac = $user->NOMBRE_MAC;
+        /*================================================================================================================*/
+
+        $resp = ['idmac'=>$idmac, 'name_mac'=>$name_mac ];
+
+        return (object) $resp;
+    }
+
     public function register(Request $request)
     {
         $request->validate([
@@ -165,17 +181,29 @@ class UserController extends Controller
         $query = DB::table('db_centros_mac.m_personal')
             ->join('db_centros_mac.m_centro_mac', 'db_centros_mac.m_centro_mac.IDCENTRO_MAC', '=', 'db_centros_mac.m_personal.IDMAC')
             ->where('db_centros_mac.m_personal.flag', 1)
-            ->whereNotIn('db_centros_mac.m_personal.IDPERSONAL', $us_exist_array)
-            ->get();
+            ->whereNotIn('db_centros_mac.m_personal.IDPERSONAL', $us_exist_array);
+
+
+        if(auth()->user()->hasRole('Especialista TIC|Orientador|Asesor|Supervisor|Coordinador')){
+            $query->where('db_centros_mac.m_personal.IDMAC', $this->centro_mac()->idmac);
+        }
+            
+        $result = $query->get();
 
         $perfil = DB::table('profiles')->get();
 
-        $roles = Role::pluck('name', 'id');
+        $roles = Role::query();
+
+        if (!auth()->user()->hasRole('Administrador')) {
+            $roles->where('name', '!=', 'Administrador');
+        }
+
+        $roles = $roles->pluck('name', 'id');
 
         return response()->json([
             "status" => 1,
             "message" => "datos varios",
-            "personal" => $query,
+            "personal" => $result,
             "profile" => $perfil,
             "roles" => $roles
         ]);
@@ -237,19 +265,6 @@ class UserController extends Controller
             $save2->flag = 1;
             $save2->save();
 
-            // $save_2 = DB::table('db_centros_mac.users')->insert([
-            //     'name'      =>  $personal->NOMBRE.' '.$personal->APE_PAT.' '.$personal->APE_MAT,
-            //     'email'     =>  $personal->CORREO,
-            //     'idpersonal'=>  $request->IDPERSONAL,
-            //     'password'  =>  bcrypt($personal->NUM_DOC),
-            //     'idcentro_mac'  =>  $personal->IDMAC,
-            //     'flag'      =>  1,
-            //     'created_at' => now(),
-            //     'updated_at' => now(),
-            // ]);
-
-
-
             DB::table('db_centros_mac.model_has_roles')->insert([
                 'role_id' => $request->rol_,  
                 'model_type' => 'App\\Models\\User',  
@@ -282,7 +297,132 @@ class UserController extends Controller
                 "error" => $e->getMessage()
             ], 500);
         }
-        
+
     }
+
+    public function usersPassword(Request $request)
+    {
+        $this->validate($request,[
+            'password' => 'required',
+        ]);
+
+        $save = User::findOrFail($request->id);
+        $save->password = bcrypt($request->password);
+        $save->save();
+
+        $save2 = Userint::findOrFail($request->id);
+        $save2->password = $save->password;
+        $save2->save();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Usuario actualizado exitosamente.",
+        ]);
+
+    }
+
+    public function usersEdit(Request $request)
+    {
+
+        $perfil = DB::table('profiles')->get();
+
+        $roles_completo = Role::query();
+
+        if (!auth()->user()->hasRole('Administrador')) {
+            $roles_completo->where('name', '!=', 'Administrador');
+        }
+
+        $roles_completo = $roles_completo->pluck('name', 'id');
+
+
+        $user = User::with(['roles', 'profiles'])->findOrFail($request->id);
+
+        // Asegúrate de que los roles y perfiles se devuelvan como arrays
+        $roles = $user->roles->pluck('id')->toArray();
+        $profiles = $user->profiles->pluck('id')->toArray();
+
+        return response()->json([
+            'status' => true,
+            'user' => $user,
+            'roles' => $roles, 
+            'perfil' => $perfil,
+            'roles_completo' => $roles_completo,
+            'profiles' => $profiles, 
+        ]);
+    }
+
+    public function usersUpdate(Request $request)
+    {
+        try {
+            // Actualizar en la primera base de datos
+            $user = User::findOrFail($id);
+            $user->name = $request->input('name');
+            $user->email = $request->input('email');
+            $user->save();
+    
+            // Actualizar roles en la primera base de datos
+            $user->roles()->sync([$request->rol_]);
+    
+            // Actualizar perfiles en la primera base de datos
+            DB::table('user_profile')->where('user_id', $user->id)->delete();
+            foreach ($request->perfil_ as $perfilId) {
+                DB::table('user_profile')->insert([
+                    'user_id' => $user->id,  
+                    'profile_id' => $perfilId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+    
+            // Actualizar en la segunda base de datos
+            DB::table('db_centros_mac.users')
+                ->where('idpersonal', $user->id_personal)
+                ->update([
+                    'name' => $request->input('name'),
+                    'email' => $request->input('email'),
+                ]);
+    
+            // Actualizar roles en la segunda base de datos
+            DB::table('db_centros_mac.model_has_roles')
+                ->where('model_id', $user->id)
+                ->update([
+                    'role_id' => $request->rol_,
+                ]);
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'Usuario actualizado exitosamente.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Hubo un error al actualizar el usuario.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }        
+
+    public function usersDelete(Request $request)
+    {
+        try {
+            $user = User::findOrFail($request->id);
+            $user->delete();
+    
+            DB::table('db_centros_mac.users')->where('idpersonal', $user->id_personal)->delete();
+    
+            return response()->json([
+                'status' => true,
+                'message' => 'Usuario eliminado exitosamente.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Hubo un error al eliminar el usuario.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    
 }
 

@@ -139,8 +139,13 @@ class PersonalController extends Controller
                                 ->join('db_centros_mac.M_ENTIDAD', 'db_centros_mac.M_ENTIDAD.IDENTIDAD', '=', 'db_centros_mac.M_MODULO.IDENTIDAD')
                                 ->join('db_centros_mac.M_CENTRO_MAC', 'db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', '=', 'db_centros_mac.M_MODULO.IDCENTRO_MAC')
                                 ->where('db_centros_mac.M_CENTRO_MAC.IDCENTRO_MAC', $personal->IDMAC)
+                                ->where(function($query) {
+                                    $query->whereDate('db_centros_mac.M_MODULO.FECHAINICIO', '<=', now()->format('Y-m-d')) // Comparar con la fecha actual en formato 'YYYY-MM-DD'
+                                          ->whereDate('db_centros_mac.M_MODULO.FECHAFIN', '>=', now()->format('Y-m-d'));    // Comparar con la fecha actual en formato 'YYYY-MM-DD'
+                                })
                                 ->orderBy('db_centros_mac.M_MODULO.N_MODULO','ASC')
-                                ->get();                                
+                                ->get();
+
 
         return response()->json([
             "status" => true,

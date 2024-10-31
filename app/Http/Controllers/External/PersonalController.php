@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Mail\ConfirmacionRegistro;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 
 class PersonalController extends Controller
@@ -127,7 +128,7 @@ class PersonalController extends Controller
     {
         $departamentos = DB::select("SELECT * FROM db_centros_mac.DEPARTAMENTO ");
 
-        $cargos = DB::select("SELECT * FROM db_centros_mac.D_PERSONAL_CARGO ");
+        $cargos = DB::select("SELECT * FROM db_centros_mac.D_PERSONAL_CARGO ");        
 
         $personal = DB::table('db_centros_mac.M_PERSONAL')->leftJoin('db_centros_mac.M_ENTIDAD', 'db_centros_mac.M_ENTIDAD.IDENTIDAD', '=', 'db_centros_mac.M_PERSONAL.IDENTIDAD')
                                 ->where('M_PERSONAL.NUM_DOC', $num_doc)
@@ -147,14 +148,65 @@ class PersonalController extends Controller
                                 ->get();
 
 
+        $archivos = DB::select("SELECT * FROM db_centros_mac.A_PERSONAL WHERE IDPERSONAL = $personal->IDPERSONAL");
+
         return response()->json([
             "status" => true,
             "message" => "Detalles obtenidos con éxito",
             "departamentos" => $departamentos,
             "personal" => $personal,
             "cargos" => $cargos,
-            "modulos" => $modulos
+            "modulos" => $modulos,
+            "archivos" => $archivos
         ]);
+    }
+
+    public function downloadFile(Request $request)
+    {
+        $fileId = $request->id;
+        $file = DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $fileId)->first();
+
+        if ($file) {
+            // Construye la ruta a partir del directorio `public`
+            $filePath = $file->NOMBRE_RUTA;
+            $fullPath = public_path($filePath);
+
+            // dd($fullPath);
+
+            if (file_exists($fullPath)) {
+                return response()->download($fullPath, $file->NOMBRE_ARCHIVO);
+            } else {
+                return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la ruta especificada.'], 404);
+            }
+        } else {
+            return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la base de datos.'], 404);
+        }
+    }
+
+    public function deletefile(Request $request, $id)
+    {
+        // Busca el archivo en la base de datos usando el ID proporcionado
+        $file = DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->first();
+
+        // Verifica si el archivo existe
+        if ($file) {
+            $filePath = public_path($file->NOMBRE_RUTA); // Ruta completa del archivo
+
+            // Comprueba si el archivo existe en el sistema de archivos
+            if (file_exists($filePath)) {
+                // Elimina el archivo físico
+                unlink($filePath);
+
+                // Elimina el registro de la base de datos
+                DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->delete();
+
+                return response()->json(['status' => true, 'message' => 'Archivo eliminado correctamente.']);
+            } else {
+                return response()->json(['status' => false, 'message' => 'Archivo no encontrado en el sistema de archivos.'], 404);
+            }
+        } else {
+            return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la base de datos.'], 404);
+        }
     }
 
     public function storeform(Request $request)
@@ -172,6 +224,7 @@ class PersonalController extends Controller
                 'TELEFONO' => $request->telefono ?: null,
                 'CELULAR' => $request->celular ?: null,
                 'CORREO' => $request->correo ?: null,
+                'CORREO_INSTITUCIONAL' => $request->correo_institucional ?: null,
                 'DIRECCION' => strtoupper($request->direccion) ?: null,
                 'IDDISTRITO' => $request->distritoSeleccionado ?: null,
                 'FECH_NACIMIENTO' => $request->fech_nacimiento ?: null,
@@ -201,7 +254,8 @@ class PersonalController extends Controller
                 'NOMBRE' => 'Nombres',
                 'TELEFONO' => 'Teléfono',
                 'CELULAR' => 'Celular',
-                'CORREO' => 'Correo Electrónico',
+                'CORREO' => 'Correo Electrónico Personal',
+                'CORREO_INSTITUCIONAL' => 'Correo Electrónico Institucional',
                 'DIRECCION' => 'Dirección',
                 'DISTRITO_SELECCIONADO' => 'Distrito',
                 'FECH_NACIMIENTO' => 'Fecha de Nacimiento',
@@ -236,25 +290,29 @@ class PersonalController extends Controller
             //         ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
 
             DB::select("UPDATE `db_centros_mac`.`M_PERSONAL` 
-                        SET `NUM_DOC` = $request->num_doc, `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `IDMODULO` = $request->moduloSeleccionado, `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `I_INGLES` = '$request->inglesSeleccionado', `I_QUECHUA` = '$request->quechuaSeleccionado',`UPDATED_AT` = '2024-07-24 09:32:30' 
+                        SET `NUM_DOC` = $request->num_doc, `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo' , `CORREO_INSTITUCIONAL` = '$request->correo_institucional', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `IDMODULO` = $request->moduloSeleccionado, `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `I_INGLES` = '$request->inglesSeleccionado', `I_QUECHUA` = '$request->quechuaSeleccionado',`UPDATED_AT` = '2024-07-24 09:32:30' 
                         WHERE `IDPERSONAL` = $request->idpersonal");
  
             // dd($save);
 
-            // Maneja el archivo PDF
+            // Maneja el archivo 
             if ($request->hasFile('dni')) {
                 $estructura_carp = 'personal\\num_doc\\'.$request->num_doc;
+            
+                // Crea el directorio si no existe
                 if (!file_exists(public_path($estructura_carp))) {
                     mkdir(public_path($estructura_carp), 0777, true);
                 }
-
+            
                 $archivoDNI = $request->file('dni');
-                $nombreDNI = $archivoDNI->getClientOriginalName();
+                $nombreDNI = $archivoDNI->getClientOriginalName();  // Obtiene el nombre original del archivo
                 $formatoDNI = $archivoDNI->getClientOriginalExtension();
                 $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // Tamaño en kilobytes
-                $namerutaDNI = public_path($estructura_carp);
-                $archivoDNI->move($namerutaDNI, $request->num_doc);
-
+                $namerutaDNI = public_path($estructura_carp . '\\' . $nombreDNI);
+            
+                // Mueve el archivo al destino con su nombre original
+                $archivoDNI->move(public_path($estructura_carp), $nombreDNI);
+            
                 // Inserta o actualiza en la tabla a_personal
                 DB::table('db_centros_mac.A_PERSONAL')->updateOrInsert(
                     ['IDPERSONAL' => $request->idpersonal, 'NOMBRE_ARCHIVO' => $nombreDNI],

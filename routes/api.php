@@ -19,6 +19,9 @@ Route::get('combo', [PersonalController::class, 'combo']);
 Route::post('validar', [PersonalController::class, 'validar']);
 Route::get('formdata/{num_doc}', [PersonalController::class, 'formdata']);
 Route::post('storeform', [PersonalController::class, 'storeform']);
+Route::get('downloadfile', [PersonalController::class, 'downloadFile']);
+Route::delete('deletefile/{id}', [PersonalController::class, 'deleteFile']);
+
 
 //ASISTENCIA
 Route::get('users-assists-list', [AssistsController::class, 'usersAssistsList']);

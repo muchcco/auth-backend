@@ -30,6 +30,7 @@ class PersonalController extends Controller
 
     public function validar(Request $request)
     {
+        // dd($request->all());
         //VALIDAMOS SI EL USUARIO EXISTE
         /* ========================================================================================================= */
         
@@ -112,6 +113,7 @@ class PersonalController extends Controller
                 'IDMAC' => $request->input('nom_mac'),
                 'CREATED_AT' => date('Y-m-d H:i:s')
             ]);
+
 
             return response()->json([
                 "status" => true,
@@ -290,7 +292,7 @@ class PersonalController extends Controller
             //         ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
 
             DB::select("UPDATE `db_centros_mac`.`M_PERSONAL` 
-                        SET `NUM_DOC` = $request->num_doc, `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo' , `CORREO_INSTITUCIONAL` = '$request->correo_institucional', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `IDMODULO` = $request->moduloSeleccionado, `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `I_INGLES` = '$request->inglesSeleccionado', `I_QUECHUA` = '$request->quechuaSeleccionado',`UPDATED_AT` = '2024-07-24 09:32:30' 
+                        SET `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo' , `CORREO_INSTITUCIONAL` = '$request->correo_institucional', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `IDMODULO` = $request->moduloSeleccionado, `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `I_INGLES` = '$request->inglesSeleccionado', `I_QUECHUA` = '$request->quechuaSeleccionado',`UPDATED_AT` = '2024-07-24 09:32:30' 
                         WHERE `IDPERSONAL` = $request->idpersonal");
  
             // dd($save);
@@ -350,11 +352,59 @@ class PersonalController extends Controller
             ]);
 
 
+        } catch (\Illuminate\Database\QueryException $e) {
+            $errorMessage = $e->getMessage();
+    
+            // Detecta el campo que causó el error
+            if (preg_match("/for column '(.*?)'/", $errorMessage, $matches)) {
+                $columnName = $matches[1];
+                $friendlyFieldNames = [
+                    'NUM_DOC' => 'Número de Documento',
+                    'IDTIPO_DOC' => 'Tipo de Documento',
+                    'SEXO' => 'Sexo',
+                    'APE_PAT' => 'Apellido Paterno',
+                    'APE_MAT' => 'Apellido Materno',
+                    'NOMBRE' => 'Nombres',
+                    'TELEFONO' => 'Teléfono',
+                    'CELULAR' => 'Celular',
+                    'CORREO' => 'Correo Electrónico Personal',
+                    'CORREO_INSTITUCIONAL' => 'Correo Electrónico Institucional',
+                    'DIRECCION' => 'Dirección',
+                    'IDDISTRITO' => 'Distrito',
+                    'FECH_NACIMIENTO' => 'Fecha de Nacimiento',
+                    'ESTADO_CIVIL' => 'Estado Civil',
+                    'DF_N_HIJOS' => 'Número de Hijos',
+                    'PCM_TALLA' => 'Talla de Polo',
+                    'IDCARGO_PERSONAL' => 'Cargo',
+                    'PD_FECHA_INGRESO' => 'Fecha de Ingreso',
+                    'IDMODULO' => 'Módulo',
+                    'TVL_ID' => 'Modalidad de Contrato',
+                    'N_CONTRATO' => 'Número de Contrato',
+                    'GI_ID' => 'Grado',
+                    'GI_CARRERA' => 'Carrera/Profesión',
+                    'GI_CURSO_ESP' => 'Cursos de Especialización',
+                    'DLP_JEFE_INMEDIATO' => 'Jefe Inmediato',
+                    'DLP_CARGO' => 'Cargo',
+                    'DLP_TELEFONO' => 'Teléfono del Jefe',
+                    'TIP_CAS' => 'Tipo de Contrato',
+                ];
+    
+                $friendlyField = $friendlyFieldNames[$columnName] ?? $columnName;
+    
+                return response()->json([
+                    "status" => false,
+                    "message" => "Error en el campo: {$friendlyField}. Por favor, verifica la información ingresada.",
+                ], 400);
+            }
+    
+            return response()->json([
+                "status" => false,
+                "message" => "Error de base de datos: " . $e->getMessage(),
+            ], 500);
         } catch (\Exception $e) {
             return response()->json([
                 "status" => false,
-                "message" => "Se excedió el tiempo de carga. Inténtelo de nuevo más tarde.",
-                "error" => $e->getMessage()
+                "message" => "Error inesperado: " . $e->getMessage(),
             ], 500);
         }
     }

@@ -187,29 +187,38 @@ class PersonalController extends Controller
 
     public function deletefile(Request $request, $id)
     {
-        // Busca el archivo en la base de datos usando el ID proporcionado
-        $file = DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->first();
-
-        // Verifica si el archivo existe
-        if ($file) {
-            $filePath = public_path($file->NOMBRE_RUTA); // Ruta completa del archivo
-
-            // Comprueba si el archivo existe en el sistema de archivos
-            if (file_exists($filePath)) {
-                // Elimina el archivo físico
-                unlink($filePath);
-
-                // Elimina el registro de la base de datos
-                DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->delete();
-
-                return response()->json(['status' => true, 'message' => 'Archivo eliminado correctamente.']);
+        try {
+            // Busca el archivo en la base de datos usando el ID proporcionado
+            $file = DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->first();
+    
+            if ($file) {
+                $filePath = public_path($file->NOMBRE_RUTA); // Ruta completa del archivo
+                // dd($filePath);
+    
+                // Comprueba si el archivo físico existe
+                if (file_exists($filePath)) {
+                    // Intenta eliminar el archivo físico
+                    if (@unlink($filePath)) {
+                        // Si se elimina correctamente, elimina el registro de la base de datos
+                        DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->delete();
+                        return response()->json(['status' => true, 'message' => 'Archivo eliminado correctamente.']);
+                    } else {
+                        return response()->json(['status' => false, 'message' => 'No se pudo eliminar el archivo del sistema de archivos.'], 500);
+                    }
+                } else {
+                    // Si el archivo no existe físicamente, elimina solo el registro
+                    DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->delete();
+                    return response()->json(['status' => true, 'message' => 'Archivo no encontrado físicamente, pero el registro ha sido eliminado.']);
+                }
             } else {
-                return response()->json(['status' => false, 'message' => 'Archivo no encontrado en el sistema de archivos.'], 404);
+                return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la base de datos.'], 404);
             }
-        } else {
-            return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la base de datos.'], 404);
+        } catch (\Exception $e) {
+            // Captura cualquier error inesperado
+            return response()->json(['status' => false, 'message' => 'Error al intentar eliminar el archivo.', 'error' => $e->getMessage()], 500);
         }
     }
+    
 
     public function storeform(Request $request)
     {

@@ -222,190 +222,114 @@ class PersonalController extends Controller
 
     public function storeform(Request $request)
     {
-        // dd($request->id_tipo_doc);
         try {
-            
-            $inputs = [
-                'NUM_DOC' => strtoupper($request->num_doc) ?: null,
-                'IDTIPO_DOC' => strtoupper($request->id_tipo_doc) ?: null,
-                'SEXO' => strtoupper($request->sexo) ?: null,
-                'APE_PAT' => strtoupper($request->ape_pat) ?: null,
-                'APE_MAT' => strtoupper($request->ape_mat) ?: null,
-                'NOMBRE' => strtoupper($request->nombre) ?: null,
-                'TELEFONO' => $request->telefono ?: null,
-                'CELULAR' => $request->celular ?: null,
-                'CORREO' => $request->correo ?: null,
-                'CORREO_INSTITUCIONAL' => $request->correo_institucional ?: null,
-                'DIRECCION' => strtoupper($request->direccion) ?: null,
-                'IDDISTRITO' => $request->distritoSeleccionado ?: null,
-                'FECH_NACIMIENTO' => $request->fech_nacimiento ?: null,
-                'ESTADO_CIVIL' => strtoupper($request->ecivil) ?: null,
-                'DF_N_HIJOS' => $request->df_n_hijos ?: null,
-                'PCM_TALLA' => strtoupper($request->pcm_talla) ?: null,
-                'IDCARGO_PERSONAL' => $request->cargoSeleccionado ?: null,
-                'PD_FECHA_INGRESO' => $request->dp_fecha_ingreso ?: null,
-                'IDMODULO' => strtoupper($request->moduloSeleccionado) ?: null,
-                'TVL_ID' => $request->tlv_id ?: null,
-                'N_CONTRATO' => strtoupper($request->n_contrato) ?: null,
-                'GI_ID' => $request->gi_id ?: null,
-                'GI_CARRERA' => strtoupper($request->gi_carrera) ?: null,
-                'GI_CURSO_ESP' => strtoupper($request->gi_curso_esp) ?: null,
-                'DLP_JEFE_INMEDIATO' => strtoupper($request->dlp_jefe_inmediato) ?: null,
-                'DLP_CARGO' => strtoupper($request->dlp_cargo) ?: null,
-                'DLP_TELEFONO' => $request->dlp_telefono ?: null,
-                'TIP_CAS' => $request->tip_cas ?: null,
-            ];
+            // Validar campos requeridos
+            $request->validate([
+                'ape_pat' => 'required|string',
+                'ape_mat' => 'required|string',
+                'nombre' => 'required|string',
+            ], [
+                'ape_pat.required' => 'El Apellido Paterno es obligatorio.',
+                'ape_mat.required' => 'El Apellido Materno es obligatorio.',
+                'nombre.required' => 'El Nombre es obligatorio.',
+            ]);
 
-            $friendlyFieldNames = [
-                'NUM_DOC' => 'Número de Documento',
-                'ID_TIPO_DOC' => 'Tipo de Documento',
-                'SEXO' => 'Sexo',
-                'APE_PAT' => 'Apellido Paterno',
-                'APE_MAT' => 'Apellido Materno',
-                'NOMBRE' => 'Nombres',
-                'TELEFONO' => 'Teléfono',
-                'CELULAR' => 'Celular',
-                'CORREO' => 'Correo Electrónico Personal',
-                'CORREO_INSTITUCIONAL' => 'Correo Electrónico Institucional',
-                'DIRECCION' => 'Dirección',
-                'DISTRITO_SELECCIONADO' => 'Distrito',
-                'FECH_NACIMIENTO' => 'Fecha de Nacimiento',
-                'ECIVIL' => 'Estado Civil',
-                'DF_N_HIJOS' => 'Número de Hijos',
-                'PCM_TALLA' => 'Talla de Polo',
-                'CARGO_SELECCIONADO' => 'Cargo',
-                'DP_FECHA_INGRESO' => 'Fecha de Ingreso al Centro MAC',
-                'IDMODULO' => 'Número de Módulo de Atención',
-                'TLV_ID' => 'Modalidad de Contrato',
-                'N_CONTRATO' => 'Número de Contrato',
-                'GI_ID' => 'Grado',
-                'GI_CARRERA' => 'Carrera/Profesión',
-                'GI_CURSO_ESP' => 'Cursos de Especialización',
-                'DLP_JEFE_INMEDIATO' => 'Jefe Inmediato Superior',
-                'DLP_CARGO' => 'Cargo',
-                'DLP_TELEFONO' => 'Teléfono del Jefe Inmediato',
-            ];
-            
-            // front
-            $pending = [];
-            foreach ($inputs as $key => $value) {
-                if (!isset($value) && $value !== '0') {
-                    $pending[] = $friendlyFieldNames[$key];
-                    unset($inputs[$key]);
-                }
-            }
-            
-             // Actualiza la tabla M_PERSONAL
-            //  DB::table('db_centros_mac.M_PERSONAL')
-            //         ->where('IDPERSONAL', $request->idpersonal)
-            //         ->update(array_merge($inputs, ['UPDATED_AT' => date('Y-m-d H:i:s')]));
+            // Prepara los datos para la actualización/inserción
+            $inputs = collect([
+                'NUM_DOC' => strtoupper($request->num_doc),
+                'IDTIPO_DOC' => strtoupper($request->id_tipo_doc),
+                'SEXO' => strtoupper($request->sexo),
+                'APE_PAT' => strtoupper($request->ape_pat),
+                'APE_MAT' => strtoupper($request->ape_mat),
+                'NOMBRE' => strtoupper($request->nombre),
+                'TELEFONO' => $request->telefono,
+                'CELULAR' => $request->celular,
+                'CORREO' => $request->correo,
+                'CORREO_INSTITUCIONAL' => $request->correo_institucional,
+                'DIRECCION' => strtoupper($request->direccion),
+                'IDDISTRITO' => $request->distritoSeleccionado,
+                'FECH_NACIMIENTO' => $request->fech_nacimiento,
+                'ESTADO_CIVIL' => strtoupper($request->ecivil),
+                'DF_N_HIJOS' => $request->df_n_hijos,
+                'PCM_TALLA' => strtoupper($request->pcm_talla),
+                'IDCARGO_PERSONAL' => $request->cargoSeleccionado,
+                'PD_FECHA_INGRESO' => $request->dp_fecha_ingreso,
+                'IDMODULO' => strtoupper($request->moduloSeleccionado),
+                'TVL_ID' => $request->tlv_id,
+                'N_CONTRATO' => strtoupper($request->n_contrato),
+                'GI_ID' => $request->gi_id,
+                'GI_CARRERA' => strtoupper($request->gi_carrera),
+                'GI_CURSO_ESP' => strtoupper($request->gi_curso_esp),
+                'DLP_JEFE_INMEDIATO' => strtoupper($request->dlp_jefe_inmediato),
+                'DLP_CARGO' => strtoupper($request->dlp_cargo),
+                'DLP_TELEFONO' => $request->dlp_telefono,
+                'TIP_CAS' => $request->tip_cas,
+            ])->filter(function ($value) {
+                return $value !== null && $value !== ''; // Solo conservar valores no vacíos
+            })->toArray();
 
-            DB::select("UPDATE `db_centros_mac`.`M_PERSONAL` 
-                        SET `IDTIPO_DOC` = $request->id_tipo_doc, `SEXO` = '$request->sexo', `APE_PAT` = '$request->ape_pat', `APE_MAT` = '$request->ape_mat', `NOMBRE` = '$request->nombre', `TELEFONO` = '$request->telefono', `CELULAR` = '$request->celular', `CORREO` = '$request->correo' , `CORREO_INSTITUCIONAL` = '$request->correo_institucional', `DIRECCION` = '$request->direccion', `IDDISTRITO` = $request->distritoSeleccionado, `FECH_NACIMIENTO` = '$request->fech_nacimiento', `ESTADO_CIVIL` = '$request->ecivil', `DF_N_HIJOS` = '$request->df_n_hijos', `PCM_TALLA` = '$request->pcm_talla', `IDCARGO_PERSONAL` = $request->cargoSeleccionado, `PD_FECHA_INGRESO` = '$request->dp_fecha_ingreso', `IDMODULO` = $request->moduloSeleccionado, `TVL_ID` = $request->tlv_id, `N_CONTRATO` = '$request->n_contrato', `TIP_CAS` = $request->tip_cas, `GI_ID` = $request->gi_id, `GI_CARRERA` = '$request->gi_carrera', `GI_CURSO_ESP` = '$request->gi_curso_esp', `DLP_JEFE_INMEDIATO` = '$request->dlp_jefe_inmediato', `DLP_CARGO` = '$request->dlp_cargo', `DLP_TELEFONO` = '$request->dlp_telefono', `I_INGLES` = '$request->inglesSeleccionado', `I_QUECHUA` = '$request->quechuaSeleccionado',`UPDATED_AT` = '2024-07-24 09:32:30' 
-                        WHERE `IDPERSONAL` = $request->idpersonal");
- 
-            // dd($save);
+            // Actualizar los datos de M_PERSONAL
+            DB::table('db_centros_mac.M_PERSONAL')
+                ->where('IDPERSONAL', $request->idpersonal)
+                ->update(array_merge($inputs, ['UPDATED_AT' => now()]));
 
-            // Maneja el archivo 
+            // Manejo del archivo
             if ($request->hasFile('dni')) {
-                $estructura_carp = 'personal\\num_doc\\'.$request->num_doc;
-            
+                $estructura_carp = 'personal/num_doc/' . $request->num_doc;
+
                 // Crea el directorio si no existe
                 if (!file_exists(public_path($estructura_carp))) {
                     mkdir(public_path($estructura_carp), 0777, true);
                 }
-            
+
                 $archivoDNI = $request->file('dni');
-                $nombreDNI = $archivoDNI->getClientOriginalName();  // Obtiene el nombre original del archivo
+                $nombreDNI = $archivoDNI->getClientOriginalName();  
                 $formatoDNI = $archivoDNI->getClientOriginalExtension();
-                $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // Tamaño en kilobytes
-                $namerutaDNI = public_path($estructura_carp . '\\' . $nombreDNI);
-            
-                // Mueve el archivo al destino con su nombre original
+                $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // Tamaño en KB
+                $namerutaDNI = $estructura_carp . '/' . $nombreDNI;
+
+                // Mueve el archivo
                 $archivoDNI->move(public_path($estructura_carp), $nombreDNI);
-            
-                // Inserta o actualiza en la tabla a_personal
+
+                // Actualiza la tabla A_PERSONAL
                 DB::table('db_centros_mac.A_PERSONAL')->updateOrInsert(
                     ['IDPERSONAL' => $request->idpersonal, 'NOMBRE_ARCHIVO' => $nombreDNI],
                     [
-                        'NOMBRE_RUTA' => $estructura_carp.'\\'.$nombreDNI,
+                        'NOMBRE_RUTA' => $namerutaDNI,
                         'FORMATO_DOC' => $formatoDNI,
                         'PESO_DOC' => $tamañoEnKBDNI,
-                        'FECHA_CREACION' => date('Y-m-d H:i:s')
+                        'FECHA_CREACION' => now(),
                     ]
                 );
             }
 
-            $nombres_dat = $request->nombre.' '.$request->ape_pat.' '.$request->ape_mat;
-
-            $pending2 = [];
-            foreach ($inputs as $key => $value) {
-                if ($value === NULL || $value === '') {
-                    $pending2[] = $friendlyFieldNames[$key];
-                }
-            }
-
+            // Enviar correo si está habilitado
             $configuracion = DB::table('configuration_sist')->where('PARAMETRO', 'CORREO')->first();
-            
-            if($configuracion->FLAG == '1'){
-                if($request->correo){
-                    Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat, $pending));
-                } 
+            if ($configuracion->FLAG == '1' && $request->correo) {
+                $nombres_dat = $request->nombre . ' ' . $request->ape_pat . ' ' . $request->ape_mat;
+                Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat));
             }
 
             return response()->json([
                 "status" => true,
-                "message" => "Detalles obtenidos con éxito",
-                "data" => $inputs,
-                "pending" => $pending
-            ]);
+                "message" => "Los datos se han guardado exitosamente.",
+            ], 200);
 
-
-        } catch (\Illuminate\Database\QueryException $e) {
-            $errorMessage = $e->getMessage();
-    
-            // Detecta el campo que causó el error
-            if (preg_match("/for column '(.*?)'/", $errorMessage, $matches)) {
-                $columnName = $matches[1];
-                $friendlyFieldNames = [
-                    'NUM_DOC' => 'Número de Documento',
-                    'IDTIPO_DOC' => 'Tipo de Documento',
-                    'SEXO' => 'Sexo',
-                    'APE_PAT' => 'Apellido Paterno',
-                    'APE_MAT' => 'Apellido Materno',
-                    'NOMBRE' => 'Nombres',
-                    'TELEFONO' => 'Teléfono',
-                    'CELULAR' => 'Celular',
-                    'CORREO' => 'Correo Electrónico Personal',
-                    'CORREO_INSTITUCIONAL' => 'Correo Electrónico Institucional',
-                    'DIRECCION' => 'Dirección',
-                    'IDDISTRITO' => 'Distrito',
-                    'FECH_NACIMIENTO' => 'Fecha de Nacimiento',
-                    'ESTADO_CIVIL' => 'Estado Civil',
-                    'DF_N_HIJOS' => 'Número de Hijos',
-                    'PCM_TALLA' => 'Talla de Polo',
-                    'IDCARGO_PERSONAL' => 'Cargo',
-                    'PD_FECHA_INGRESO' => 'Fecha de Ingreso',
-                    'IDMODULO' => 'Módulo',
-                    'TVL_ID' => 'Modalidad de Contrato',
-                    'N_CONTRATO' => 'Número de Contrato',
-                    'GI_ID' => 'Grado',
-                    'GI_CARRERA' => 'Carrera/Profesión',
-                    'GI_CURSO_ESP' => 'Cursos de Especialización',
-                    'DLP_JEFE_INMEDIATO' => 'Jefe Inmediato',
-                    'DLP_CARGO' => 'Cargo',
-                    'DLP_TELEFONO' => 'Teléfono del Jefe',
-                    'TIP_CAS' => 'Tipo de Contrato',
-                ];
-    
-                $friendlyField = $friendlyFieldNames[$columnName] ?? $columnName;
-    
-                return response()->json([
-                    "status" => false,
-                    "message" => "Error en el campo: {$friendlyField}. Por favor, verifica la información ingresada.",
-                ], 400);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errores = $e->errors();
+            $mensajes = [];
+        
+            // Recorre cada error y crea un mensaje amigable
+            foreach ($errores as $campo => $mensaje) {
+                $mensajes[] = $mensaje[0]; // Toma el primer mensaje de error para cada campo
             }
-    
+        
+            return response()->json([
+                "status" => false,
+                "message" => "Errores de validación. Por favor, complete los campos obligatorios.",
+                "errors" => $mensajes, // Retorna los mensajes amigables
+            ], 422);        
+        } catch (\Illuminate\Database\QueryException $e) {
             return response()->json([
                 "status" => false,
                 "message" => "Error de base de datos: " . $e->getMessage(),
@@ -417,6 +341,7 @@ class PersonalController extends Controller
             ], 500);
         }
     }
+
 
     /******************************************************* RECURSOS ***************************************************************************************/
 

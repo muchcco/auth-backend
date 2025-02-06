@@ -268,6 +268,115 @@ class PersonalController extends Controller
                 return $value !== null && $value !== ''; // Solo conservar valores no vacíos
             })->toArray();
 
+            $pending = [];
+
+            // Verificar campos obligatorios y agregar los pendientes
+            if (empty($request->ape_pat)) {
+                $pending[] = "Apellido Paterno";
+            }
+            if (empty($request->ape_mat)) {
+                $pending[] = "Apellido Materno";
+            }
+            if (empty($request->nombre)) {
+                $pending[] = "Nombre";
+            }
+            if (empty($request->num_doc)) {
+                $pending[] = "Número de Documento";
+            }
+            if (empty($request->id_tipo_doc)) {
+                $pending[] = "Tipo de Documento";
+            }
+            if (empty($request->sexo)) {
+                $pending[] = "Sexo";
+            }
+            if (empty($request->celular)) {
+                $pending[] = "Celular";
+            }
+            if (empty($request->telefono)) {
+                $pending[] = "Teléfono";
+            }
+            if (empty($request->correo)) {
+                $pending[] = "Correo Personal";
+            }
+            if (empty($request->correo_institucional)) {
+                $pending[] = "Correo Institucional";
+            }
+            if (empty($request->direccion)) {
+                $pending[] = "Dirección Actual";
+            }
+            if (empty($request->departamentoSeleccionado)) {
+                $pending[] = "Departamento";
+            }
+            if (empty($request->provinciaSeleccionada)) {
+                $pending[] = "Provincia";
+            }
+            if (empty($request->distritoSeleccionado)) {
+                $pending[] = "Distrito";
+            }
+            if (empty($request->fech_nacimiento)) {
+                $pending[] = "Fecha de Nacimiento";
+            }
+            if (empty($request->ecivil)) {
+                $pending[] = "Estado Civil";
+            }
+            if (empty($request->df_n_hijos)) {
+                $pending[] = "Número de Hijos";
+            }
+            if (empty($request->pcm_talla)) {
+                $pending[] = "Talla de Polo";
+            }
+            if (empty($request->cargoSeleccionado)) {
+                $pending[] = "Cargo";
+            }
+            if (empty($request->dp_fecha_ingreso)) {
+                $pending[] = "Fecha de Ingreso al Centro MAC";
+            }
+            if (empty($request->tlv_id)) {
+                $pending[] = "Modalidad de Contrato";
+            }
+            if (empty($request->n_contrato)) {
+                $pending[] = "Número de Contrato";
+            }
+            if (empty($request->tip_cas)) {
+                $pending[] = "Tipo de CAS (si aplica)";
+            }
+            if (empty($request->gi_id)) {
+                $pending[] = "Grado de Instrucción";
+            }
+            if (empty($request->gi_carrera)) {
+                $pending[] = "Carrera / Profesión";
+            }
+            if (empty($request->gi_curso_esp)) {
+                $pending[] = "Cursos de Especialización (opcional)";
+            }
+            if (empty($request->dlp_jefe_inmediato)) {
+                $pending[] = "Jefe Inmediato Superior";
+            }
+            if (empty($request->dlp_cargo)) {
+                $pending[] = "Cargo del Jefe Inmediato";
+            }
+            if (empty($request->dlp_telefono)) {
+                $pending[] = "Teléfono del Jefe Inmediato";
+            }
+            if (empty($request->inglesSeleccionado)) {
+                $pending[] = "Nivel de Inglés";
+            }
+            if (empty($request->quechuaSeleccionado)) {
+                $pending[] = "Nivel de Quechua";
+            }
+            if (empty($request->dni) && !$request->hasFile('dni')) {
+                $pending[] = "Documento Adjunto (DNI)";
+            }
+
+            // // Verificar si hay campos pendientes
+            // if (!empty($pending)) {
+            //     return response()->json([
+            //         "status" => false,
+            //         "message" => "Por favor complete los campos obligatorios antes de continuar.",
+            //         "pending" => $pending
+            //     ], 422);
+            // }
+
             // Actualizar los datos de M_PERSONAL
             DB::table('db_centros_mac.M_PERSONAL')
                 ->where('IDPERSONAL', $request->idpersonal)
@@ -307,7 +416,7 @@ class PersonalController extends Controller
             $configuracion = DB::table('configuration_sist')->where('PARAMETRO', 'CORREO')->first();
             if ($configuracion->FLAG == '1' && $request->correo) {
                 $nombres_dat = $request->nombre . ' ' . $request->ape_pat . ' ' . $request->ape_mat;
-                Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat));
+                Mail::to($request->correo)->send(new ConfirmacionRegistro($nombres_dat, $pending));  // Pasamos los pendientes
             }
 
             return response()->json([

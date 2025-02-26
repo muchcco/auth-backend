@@ -114,6 +114,15 @@ class PersonalController extends Controller
                 'CREATED_AT' => date('Y-m-d H:i:s')
             ]);
 
+            $insertedId = DB::table('d_personal_mac')->insertGetId([
+                'idcentro_mac' => $request->input('nom_mac'),
+                'idpersonal'    => $usuario->IDPERSONAL,
+                'idus_reg'      => NULL,
+                'status'      => 1,
+                'created_at'    => Carbon::now(),
+                'updated_at'    => Carbon::now()
+            ]);
+
 
             return response()->json([
                 "status" => true,

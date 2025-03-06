@@ -175,59 +175,83 @@ class PersonalController extends Controller
     public function downloadFile(Request $request)
     {
         $fileId = $request->id;
-        $file = DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $fileId)->first();
+        $file = DB::table('db_centros_mac.A_PERSONAL')
+                    ->where('IDARCHIVO_PERSONAL', $fileId)
+                    ->first();
 
         if ($file) {
-            // Construye la ruta a partir del directorio `public`
+            // Se asume que NOMBRE_RUTA ya contiene la ruta absoluta del archivo en el servidor externo
             $filePath = $file->NOMBRE_RUTA;
-            $fullPath = public_path($filePath);
-
-            // dd($fullPath);
-
-            if (file_exists($fullPath)) {
-                return response()->download($fullPath, $file->NOMBRE_ARCHIVO);
+            if (file_exists($filePath)) {
+                return response()->download($filePath, $file->NOMBRE_ARCHIVO);
             } else {
-                return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la ruta especificada.'], 404);
+                return response()->json([
+                    'status' => false, 
+                    'message' => 'Archivo no encontrado en la ruta especificada.'
+                ], 404);
             }
         } else {
-            return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la base de datos.'], 404);
+            return response()->json([
+                'status' => false, 
+                'message' => 'Archivo no encontrado en la base de datos.'
+            ], 404);
         }
     }
 
     public function deletefile(Request $request, $id)
     {
         try {
-            // Busca el archivo en la base de datos usando el ID proporcionado
-            $file = DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->first();
-    
+            // Busca el registro en la base de datos
+            $file = DB::table('db_centros_mac.A_PERSONAL')
+                        ->where('IDARCHIVO_PERSONAL', $id)
+                        ->first();
+
             if ($file) {
-                $filePath = public_path($file->NOMBRE_RUTA); // Ruta completa del archivo
-                // dd($filePath);
-    
-                // Comprueba si el archivo físico existe
+                // Se asume que NOMBRE_RUTA contiene la ruta absoluta del archivo (externa)
+                $filePath = $file->NOMBRE_RUTA;
+
+                // Comprueba si el archivo existe en la ubicación externa
                 if (file_exists($filePath)) {
                     // Intenta eliminar el archivo físico
                     if (@unlink($filePath)) {
                         // Si se elimina correctamente, elimina el registro de la base de datos
-                        DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->delete();
-                        return response()->json(['status' => true, 'message' => 'Archivo eliminado correctamente.']);
+                        DB::table('db_centros_mac.A_PERSONAL')
+                            ->where('IDARCHIVO_PERSONAL', $id)
+                            ->delete();
+                        return response()->json([
+                            'status' => true, 
+                            'message' => 'Archivo eliminado correctamente.'
+                        ]);
                     } else {
-                        return response()->json(['status' => false, 'message' => 'No se pudo eliminar el archivo del sistema de archivos.'], 500);
+                        return response()->json([
+                            'status' => false, 
+                            'message' => 'No se pudo eliminar el archivo del sistema de archivos.'
+                        ], 500);
                     }
                 } else {
-                    // Si el archivo no existe físicamente, elimina solo el registro
-                    DB::table('db_centros_mac.A_PERSONAL')->where('IDARCHIVO_PERSONAL', $id)->delete();
-                    return response()->json(['status' => true, 'message' => 'Archivo no encontrado físicamente, pero el registro ha sido eliminado.']);
+                    // Si el archivo no existe físicamente, elimina el registro de la BD
+                    DB::table('db_centros_mac.A_PERSONAL')
+                        ->where('IDARCHIVO_PERSONAL', $id)
+                        ->delete();
+                    return response()->json([
+                        'status' => true, 
+                        'message' => 'Archivo no encontrado físicamente, pero el registro ha sido eliminado.'
+                    ]);
                 }
             } else {
-                return response()->json(['status' => false, 'message' => 'Archivo no encontrado en la base de datos.'], 404);
+                return response()->json([
+                    'status' => false, 
+                    'message' => 'Archivo no encontrado en la base de datos.'
+                ], 404);
             }
         } catch (\Exception $e) {
-            // Captura cualquier error inesperado
-            return response()->json(['status' => false, 'message' => 'Error al intentar eliminar el archivo.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => false, 
+                'message' => 'Error al intentar eliminar el archivo.', 
+                'error' => $e->getMessage()
+            ], 500);
         }
-    }
-    
+    } 
 
     public function storeform(Request $request)
     {
@@ -391,35 +415,43 @@ class PersonalController extends Controller
                 ->where('IDPERSONAL', $request->idpersonal)
                 ->update(array_merge($inputs, ['UPDATED_AT' => now()]));
 
-            // Manejo del archivo
-            if ($request->hasFile('dni')) {
-                $estructura_carp = 'personal/num_doc/' . $request->num_doc;
-
-                // Crea el directorio si no existe
-                if (!file_exists(public_path($estructura_carp))) {
-                    mkdir(public_path($estructura_carp), 0777, true);
+                // Manejo del archivo
+                if ($request->hasFile('dni')) {
+                    // Obtener la ruta definida en .env (asegúrate de que esté en formato UNC extendido o ruta válida)
+                    $file_server = env('PHOTO_PATH', '');
+                    // Construir la ruta de la carpeta donde se guardarán las fotos para este número de documento
+                    $save_img_serv = $file_server . DIRECTORY_SEPARATOR . $request->num_doc;
+                    
+                    // Crear el directorio en la ruta externa si no existe
+                    if (!file_exists($save_img_serv)) {
+                        mkdir($save_img_serv, 0777, true);
+                    }
+                    
+                    $archivoDNI = $request->file('dni');
+                    $nombreDNI = $archivoDNI->getClientOriginalName();  
+                    $formatoDNI = $archivoDNI->getClientOriginalExtension();
+                    $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // en KB
+                    
+                    // Ruta completa donde se guardará el archivo en el servidor externo
+                    $fullPath = $save_img_serv . DIRECTORY_SEPARATOR . $nombreDNI;
+                    
+                    // Mueve el archivo directamente a la carpeta externa
+                    $archivoDNI->move($save_img_serv, $nombreDNI);
+                    
+                    // Actualiza la tabla A_PERSONAL con la ruta absoluta del archivo
+                    DB::table('db_centros_mac.A_PERSONAL')->updateOrInsert(
+                        ['IDPERSONAL' => $request->idpersonal, 'NOMBRE_ARCHIVO' => $nombreDNI],
+                        [
+                            'NOMBRE_RUTA'   => $fullPath,
+                            'FORMATO_DOC'   => $formatoDNI,
+                            'PESO_DOC'      => $tamañoEnKBDNI,
+                            'FECHA_CREACION'=> now(),
+                        ]
+                    );
                 }
-
-                $archivoDNI = $request->file('dni');
-                $nombreDNI = $archivoDNI->getClientOriginalName();  
-                $formatoDNI = $archivoDNI->getClientOriginalExtension();
-                $tamañoEnKBDNI = $archivoDNI->getSize() / 1024; // Tamaño en KB
-                $namerutaDNI = $estructura_carp . '/' . $nombreDNI;
-
-                // Mueve el archivo
-                $archivoDNI->move(public_path($estructura_carp), $nombreDNI);
-
-                // Actualiza la tabla A_PERSONAL
-                DB::table('db_centros_mac.A_PERSONAL')->updateOrInsert(
-                    ['IDPERSONAL' => $request->idpersonal, 'NOMBRE_ARCHIVO' => $nombreDNI],
-                    [
-                        'NOMBRE_RUTA' => $namerutaDNI,
-                        'FORMATO_DOC' => $formatoDNI,
-                        'PESO_DOC' => $tamañoEnKBDNI,
-                        'FECHA_CREACION' => now(),
-                    ]
-                );
-            }
+                
+                
+                
 
             // Enviar correo si está habilitado
             $configuracion = DB::table('configuration_sist')->where('PARAMETRO', 'CORREO')->first();

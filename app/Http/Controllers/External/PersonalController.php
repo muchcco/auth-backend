@@ -201,7 +201,7 @@ class PersonalController extends Controller
     public function deletefile(Request $request, $id)
     {
         try {
-            // Busca el registro en la base de datos
+            // Busca el registro en la base de datosassa
             $file = DB::table('db_centros_mac.A_PERSONAL')
                         ->where('IDARCHIVO_PERSONAL', $id)
                         ->first();

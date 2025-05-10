@@ -9,6 +9,7 @@ use App\Http\Controllers\Repository\DocumentController;
 use App\Http\Controllers\External\PersonalController;
 use App\Http\Controllers\Administrator\EntityController;
 use App\Http\Controllers\External\AssistsController;
+use App\Http\Controllers\External\Birthday;
 
 Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
@@ -26,6 +27,9 @@ Route::delete('deletefile/{id}', [PersonalController::class, 'deleteFile']);
 //ASISTENCIA
 Route::get('users-assists-list', [AssistsController::class, 'usersAssistsList']);
 Route::post('store-assists', [AssistsController::class, 'storeAssists']);
+
+//BIRTHDAY
+Route::get('centro-mac', [Birthday::class, 'listMac']);
 
 
 //RECURSOS

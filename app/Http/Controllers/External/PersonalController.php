@@ -450,7 +450,18 @@ class PersonalController extends Controller
                     );
                 }
                 
-                
+            //insertar a la tabla d_personal_mac
+            // Obtener datos del personal
+            $personal_data = DB::table('db_centros_mac.M_PERSONAL')
+                ->where('IDPERSONAL', $request->idpersonal)
+                ->first();
+
+            // Insertar en la tabla d_personal_mac
+            DB::table('db_centros_mac.d_personal_mac')->insert([
+                                            'idcentro_mac' => $personal_data->IDMAC,
+                                            'idpersonal'   => $request->idpersonal,
+                                            'status'       => 1,
+                                            ]);
                 
 
             // Enviar correo si está habilitado

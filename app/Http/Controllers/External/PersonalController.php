@@ -458,7 +458,7 @@ class PersonalController extends Controller
             
             $peronal_mac_ = DB::table('db_centros_mac.d_personal_mac')
                             ->where('idpersonal', $request->idpersonal)
-                            ->where('idcentro_mac' $personal_data->IDMAC)
+                            ->where('idcentro_mac', $personal_data->IDMAC)
                             -first();
                 
             if(! $peronal_mac_) // si  no existe

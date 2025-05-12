@@ -455,14 +455,25 @@ class PersonalController extends Controller
             $personal_data = DB::table('db_centros_mac.M_PERSONAL')
                 ->where('IDPERSONAL', $request->idpersonal)
                 ->first();
-
-            // Insertar en la tabla d_personal_mac
-            // DB::table('db_centros_mac.d_personal_mac')->insert([
-            //                                 'idcentro_mac' => $personal_data->IDMAC,
-            //                                 'idpersonal'   => $request->idpersonal,
-            //                                 'status'       => 1,
-            //                                 ]);
+            
+            $peronal_mac_ = DB::table('db_centros_mac.d_personal_mac')
+                            ->where('idpersonal', $request->idpersonal)
+                            ->where('idcentro_mac' $personal_data->IDMAC)
+                            -first();
                 
+            if(! $peronal_mac_) // si  no existe
+            {
+                  // Insertar en la tabla d_personal_mac
+                DB::table('db_centros_mac.d_personal_mac')->insert([
+                                        'idcentro_mac' => $personal_data->IDMAC,
+                                        'idpersonal'   => $request->idpersonal,
+                                        'status'       => 1,
+                                        ]);
+
+            }
+            
+
+
 
             // Enviar correo si está habilitado
             $configuracion = DB::table('configuration_sist')->where('PARAMETRO', 'CORREO')->first();

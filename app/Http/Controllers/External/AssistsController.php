@@ -9,6 +9,48 @@ use Carbon\Carbon;
 
 class AssistsController extends Controller
 {
+
+    public function entities()
+    {
+        // Ajusta la tabla y campos a los reales de tu esquema
+        
+
+        $data = DB::table('db_centros_mac.M_CENTRO_MAC as m')
+                    ->join('db_centros_mac.distrito as d','m.ubicacion','=','d.IDDISTRITO')
+                    ->join('db_centros_mac.departamento as dep','d.DEPARTAMENTO_ID','=','dep.IDDEPARTAMENTO')                    
+                    ->select([
+                        'm.IDCENTRO_MAC as id',
+                        'm.NOMBRE_MAC as nombre',
+                        'dep.NAME_DEPARTAMENTO',
+                        'd.NAME_DISTRITO',
+                        'm.fecha_apertura',
+                        'm.foto_ruta as url'
+                    ])
+                    ->whereNot('m.idcentro_mac', '5')
+                    ->orderBy('nombre', 'asc')
+                    ->get();
+
+        return response()->json([
+            "status" => true,
+            "data"   => $data
+        ]);
+    }   
+
+    public function entityById($id)
+    {
+        $row = DB::table('db_centros_mac.M_CENTRO_MAC')
+            ->select(['IDCENTRO_MAC as id', 'NOMBRE_MAC as nombre'])
+            ->where('IDCENTRO_MAC', $id)
+            ->first();
+
+        if (!$row) {
+            return response()->json(["status" => false, "message" => "Entidad no encontrada"], 404);
+        }
+
+        return response()->json(["status" => true, "data" => $row]);
+    }
+
+
     public function usersAssistsList(Request $request)
     {
         $personal = DB::table('db_centros_mac.M_PERSONAL')->where('NUM_DOC', $request->numeroDocumento)->first();
@@ -49,7 +91,7 @@ class AssistsController extends Controller
             DB::table('db_centros_mac.M_ASISTENCIA')->insert([
                 'IDTIPO_ASISTENCIA' => 1,
                 'NUM_DOC'           => $request->numeroDocumento,
-                'IDCENTRO_MAC'      => $personal->IDMAC,
+                'IDCENTRO_MAC'      => $request->idMac,
                 'MES'               => str_pad($mes, 2, '0', STR_PAD_LEFT), 
                 'AÑO'               => $año,
                 'FECHA'             => $fechaFormateada,

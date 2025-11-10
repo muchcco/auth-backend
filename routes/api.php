@@ -25,6 +25,10 @@ Route::delete('deletefile/{id}', [PersonalController::class, 'deleteFile']);
 
 
 //ASISTENCIA
+
+Route::get('entities', [AssistsController::class, 'entities']);
+Route::get('entities/{id}', [AssistsController::class, 'entityById']);
+
 Route::get('users-assists-list', [AssistsController::class, 'usersAssistsList']);
 Route::post('store-assists', [AssistsController::class, 'storeAssists']);
 

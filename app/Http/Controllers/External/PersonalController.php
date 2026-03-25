@@ -471,6 +471,96 @@ class PersonalController extends Controller
             //                             ]);
 
             // }
+
+            // =====================================================
+            // CONEXION TEMPORAL A SQL SERVER DENTRO DE LA FUNCION
+            // =====================================================
+            config([
+                'database.connections.sqlsrv_centros_temp' => [
+                    'driver' => 'sqlsrv',
+                    'host' => '143.137.147.148',
+                    'port' => '1433',
+                    'database' => 'centros_mac',
+                    'username' => 'sa',
+                    'password' => 's1s@dm1n',
+                    'charset' => 'utf8',
+                    'prefix' => '',
+                    'prefix_indexes' => true,
+                    'encrypt' => 'no',
+                    'trust_server_certificate' => true,
+                ],
+            ]);
+
+            DB::purge('sqlsrv_centros_temp');
+            DB::reconnect('sqlsrv_centros_temp');
+
+            $sqlServer = DB::connection('sqlsrv_centros_temp');
+
+            // mapear modalidadContrato para no romper el CHECK de SQL Server
+            $modalidadContrato = null;
+
+            if (!empty($request->modalidadContrato)) {
+                $tmpModalidad = strtoupper(trim($request->modalidadContrato));
+                if (in_array($tmpModalidad, ['CAS', 'OS', 'S/M'])) {
+                    $modalidadContrato = $tmpModalidad;
+                }
+            }
+
+            // si no tienes request->modalidadContrato y por ahora quieres dejarlo nulo, así está bien
+
+            $datosMacPersonal = [
+                'idTipoDoc' => !empty($request->id_tipo_doc) ? $request->id_tipo_doc : null,
+                'num_doc' => !empty($request->num_doc) ? strtoupper($request->num_doc) : null,
+                'sexo' => !empty($request->sexo) ? strtoupper($request->sexo) : null,
+                'nombre' => !empty($request->nombre) ? strtoupper($request->nombre) : null,
+                'apePaterno' => !empty($request->ape_pat) ? strtoupper($request->ape_pat) : null,
+                'apeMaterno' => !empty($request->ape_mat) ? strtoupper($request->ape_mat) : null,
+                'celular' => $request->celular ?? null,
+                'telefono' => $request->telefono ?? null,
+                'correoPersonal' => $request->correo ?? null,
+                'correoInstitucional' => $request->correo_institucional ?? null,
+                'direccion' => !empty($request->direccion) ? strtoupper($request->direccion) : null,
+                'idDistritoActual' => !empty($request->distritoSeleccionado) ? $request->distritoSeleccionado : null,
+                'fechaNacimiento' => !empty($request->fech_nacimiento) ? $request->fech_nacimiento : null,
+                'EstadoCivil' => !empty($request->ecivil) ? strtoupper($request->ecivil) : null,
+                'NumeroHijos' => !empty($request->df_n_hijos) ? $request->df_n_hijos : null,
+                'tallaPolo' => !empty($request->pcm_talla) ? strtoupper($request->pcm_talla) : null,
+                'fechaIngresoMac' => !empty($request->dp_fecha_ingreso) ? $request->dp_fecha_ingreso : null,
+                'modalidadContrato' => $modalidadContrato,
+                'numeroContrato' => !empty($request->n_contrato) ? strtoupper($request->n_contrato) : null,
+                'carreraProfesiona' => !empty($request->gi_carrera) ? strtoupper($request->gi_carrera) : null,
+                'nombreJefeSuperior' => !empty($request->dlp_jefe_inmediato) ? strtoupper($request->dlp_jefe_inmediato) : null,
+                'cargoJefeSuperior' => !empty($request->dlp_cargo) ? strtoupper($request->dlp_cargo) : null,
+                'telefonoJefeSuperior' => $request->dlp_telefono ?? null,
+                'estado' => 1,
+                'flag' => 1,
+                'fechaCreacion' => now(),
+                'idCargo' => !empty($request->cargoSeleccionado) ? $request->cargoSeleccionado : null,
+            ];
+
+            // quitar nulos y vacíos
+            $datosMacPersonal = array_filter($datosMacPersonal, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
+            // buscar si ya existe por num_doc
+            $macPersonalExistente = $sqlServer
+                ->table('MacPersonal')
+                ->where('num_doc', strtoupper($request->num_doc))
+                ->first();
+
+            if (!$macPersonalExistente) {
+                $insert_sqlserver = $sqlServer
+                    ->table('MacPersonal')
+                    ->insertGetId($datosMacPersonal, 'idPersonal');
+            } else {
+                $sqlServer
+                    ->table('MacPersonal')
+                    ->where('idPersonal', $macPersonalExistente->idPersonal)
+                    ->update($datosMacPersonal);
+
+                $insert_sqlserver = $macPersonalExistente->idPersonal;
+            }
             
 
 
